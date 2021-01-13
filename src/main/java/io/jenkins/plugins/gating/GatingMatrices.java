@@ -24,6 +24,7 @@ package io.jenkins.plugins.gating;
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.model.RootAction;
+import org.jfree.chart.renderer.category.BarRenderer3D;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
@@ -32,7 +33,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Extension
 public final class GatingMatrices implements RootAction {
@@ -49,7 +49,7 @@ public final class GatingMatrices implements RootAction {
      * Updates are only performed by adding/replacing/removing of values per given key.
      */
     @GuardedBy("matricesLock")
-    private @Nonnull final Map<String, Snapshot> matricesMap = new ConcurrentHashMap<>();
+    private @Nonnull final Map<String, Snapshot> matricesMap = new HashMap<>();
 
     /**
      * Map of all resources.
@@ -64,18 +64,24 @@ public final class GatingMatrices implements RootAction {
     }
 
     @Override
-    public @CheckForNull String getIconFileName() {
-        return null;
+    public @Nonnull String getIconFileName() {
+        return "notepad.png";
     }
 
     @Override
     public @Nonnull String getDisplayName() {
-        return "Gating matrices";
+        return "Gating Matrices";
     }
 
     @Override
     public @Nonnull String getUrlName() {
         return "gating";
+    }
+
+    public @Nonnull Map<String, Snapshot> getMatrices() {
+        synchronized (matricesLock) {
+            return new HashMap<>(matricesMap);
+        }
     }
 
     /**
@@ -134,6 +140,18 @@ public final class GatingMatrices implements RootAction {
 
         public @Nonnull Map<String, ResourceStatus> getStatuses() {
             return statuses;
+        }
+
+        public static Snapshot with(String name, ResourceStatus rs) {
+            HashMap<String, ResourceStatus> hm = new HashMap<>();
+            hm.put(name, rs);
+            return new Snapshot(hm);
+        }
+
+        public Snapshot and(String name, ResourceStatus rs) {
+            HashMap<String, ResourceStatus> hm = new HashMap<>(statuses);
+            hm.put(name, rs);
+            return new Snapshot(hm);
         }
     }
 }
