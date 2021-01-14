@@ -24,20 +24,24 @@ package io.jenkins.plugins.gating;
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.model.RootAction;
-import org.jfree.chart.renderer.category.BarRenderer3D;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.logging.Logger;
 
 @Extension
 public final class GatingMatrices implements RootAction {
+    private static final Logger LOGGER = Logger.getLogger(GatingMatrices.class.getName());
 
     public static final @Nonnull String DELIM = "/";
+    public static final Comparator<String> RESOURCE_ID_COMPARATOR = String::compareToIgnoreCase;
 
     private @Nonnull final Object matricesLock = new Object();
 
@@ -91,7 +95,7 @@ public final class GatingMatrices implements RootAction {
         synchronized (matricesLock) {
             if (resourceMap != null) return resourceMap;
 
-            Map<String, ResourceStatus> statuses = new HashMap<>();
+            Map<String, ResourceStatus> statuses = new TreeMap<>(RESOURCE_ID_COMPARATOR);
             for (Snapshot snapshot : matricesMap.values()) {
                 // Names are guaranteed not to collide
                 statuses.putAll(snapshot.statuses);
@@ -112,6 +116,9 @@ public final class GatingMatrices implements RootAction {
                 ));
             }
         }
+
+        LOGGER.fine("Received matrices update for source " + sourceLabel);
+
         synchronized (matricesLock) {
             matricesMap.put(sourceLabel, snapshot);
             resourceMap = null; // Invalidate
@@ -131,7 +138,9 @@ public final class GatingMatrices implements RootAction {
                 throw new IllegalArgumentException("Status map cannot contain null statuses");
             }
 
-            this.statuses = Collections.unmodifiableMap(new HashMap<>(statuses));
+            TreeMap<String, ResourceStatus> out = new TreeMap<>(RESOURCE_ID_COMPARATOR);
+            out.putAll(statuses);
+            this.statuses = Collections.unmodifiableMap(out);
         }
 
         public @Nonnull Date getCreated() {

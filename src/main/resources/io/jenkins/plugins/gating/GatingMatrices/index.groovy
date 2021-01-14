@@ -52,22 +52,27 @@ l.layout(permission: Job.CONFIGURE) {
     l.main_panel {
         h1(gating.displayName)
 
-        gating.matrices.each { name, snapshot ->
-            h2(name)
-            small(snapshot.created)
-            table(class: "pane sortable bigtable", width: "100%", id: "matrices") {
-                tr {
-                    th { text("Resource") }
-                    th { text("Status") }
-                }
-                snapshot.statuses.each {resource, status ->
+        def matrices = gating.matrices
+        if (matrices.isEmpty()) {
+            strong("No matrices available. Either no sources were configured, or the data have not been received yet.")
+        } else {
+            matrices.each { name, snapshot ->
+                h2(name)
+                small(snapshot.created)
+                table(class: "pane sortable bigtable", width: "100%", id: "matrices") {
                     tr {
-                        td { text(resource) }
-                        td(class: status.getCategory().name()) {
-                            strong(text(status))
-                            def category = status.getCategory()
-                            if (category != status) {
-                                small(" ($category)")
+                        th { text("Resource") }
+                        th { text("Status") }
+                    }
+                    snapshot.statuses.each { resource, status ->
+                        tr {
+                            td { text(resource) }
+                            td(class: status.getCategory().name()) {
+                                strong(text(status))
+                                def category = status.getCategory()
+                                if (category != status) {
+                                    small(" ($category)")
+                                }
                             }
                         }
                     }
