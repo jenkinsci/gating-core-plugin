@@ -25,7 +25,9 @@ import hudson.Extension;
 import hudson.model.Job;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
+import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
@@ -46,7 +48,7 @@ public final class ResourceRequirementProperty extends JobProperty<Job<?, ?>> {
         this.resources = Collections.unmodifiableList(resources);
     }
 
-    public @Nonnull List<String> getResouces() {
+    public @Nonnull List<String> getResources() {
         return resources;
     }
 
@@ -78,6 +80,16 @@ public final class ResourceRequirementProperty extends JobProperty<Job<?, ?>> {
         @Override
         public @Nonnull String getDisplayName() {
             return "Gating requirement";
+        }
+
+        @Override
+        public JobProperty<?> newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+            // Do not create the property in case it is not activated
+            if (formData.getBoolean("declares_resources")) {
+                return super.newInstance(req, formData);
+            }
+
+            return null;
         }
     }
 }

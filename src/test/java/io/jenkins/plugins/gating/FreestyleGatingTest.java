@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +42,9 @@ import static io.jenkins.plugins.gating.ResourceStatus.Category.DOWN;
 import static io.jenkins.plugins.gating.ResourceStatus.Category.UP;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class FreestyleGatingTest {
@@ -96,32 +97,55 @@ public class FreestyleGatingTest {
 
     @Test
     public void configRoundtrip() throws Exception {
+        FreeStyleProject p = j.createFreeStyleProject();
+        List<String> expected;
+
+        // Nothing configured; nothing reported
+        j.configRoundtrip(p);
+        assertNull(p.getProperty(ResourceRequirementProperty.class));
+
+        expected = Collections.emptyList();
+        p.addProperty(new ResourceRequirementProperty(expected));
+        j.configRoundtrip(p);
+        assertEquals(expected, p.getProperty(ResourceRequirementProperty.class).getResources());
+
+        // Something configured; nothing reported
+        expected = Arrays.asList(RES2, RES1);
+        p.addProperty(new ResourceRequirementProperty(expected));
+        j.configRoundtrip(p);
+        assertEquals(expected, p.getProperty(ResourceRequirementProperty.class).getResources());
+
+        // Something configured; something reported
         Map<String, ResourceStatus> status = new HashMap<>();
         status.put(RES1, MyStatus.OK);
         status.put(RES2, MyStatus.BELLY_UP);
         setStatus(status);
 
-        FreeStyleProject p = j.createFreeStyleProject();
-        List<String> expected;
-
         expected = Arrays.asList(RES2, RES1);
         p.addProperty(new ResourceRequirementProperty(expected));
         j.configRoundtrip(p);
-        assertEquals(expected, p.getProperty(ResourceRequirementProperty.class).getResouces());
+        assertEquals(expected, p.getProperty(ResourceRequirementProperty.class).getResources());
 
         expected = Collections.singletonList(RES2);
         p.addProperty(new ResourceRequirementProperty(expected));
         j.configRoundtrip(p);
-        assertEquals(expected, p.getProperty(ResourceRequirementProperty.class).getResouces());
+        assertEquals(expected, p.getProperty(ResourceRequirementProperty.class).getResources());
 
+        // Nothing configured; something reported
         expected = Collections.emptyList();
         p.addProperty(new ResourceRequirementProperty(expected));
         j.configRoundtrip(p);
-        assertEquals(expected, p.getProperty(ResourceRequirementProperty.class).getResouces());
+        assertEquals(expected, p.getProperty(ResourceRequirementProperty.class).getResources());
+
+        p.removeProperty(ResourceRequirementProperty.class);
+        j.configRoundtrip(p);
+        assertNull(p.getProperty(ResourceRequirementProperty.class));
     }
 
     @Test
     public void ui() throws Exception {
+        JenkinsRule.WebClient wc = j.createWebClient();
+
         GatingMatrices gm = GatingMatrices.get();
         gm.update("statuspage", GatingMatrices.Snapshot.with("statuspage/pageA/resourceC", MyStatus.OK));
         gm.update("cachet", GatingMatrices.Snapshot.with("cachet/resource1", MyStatus.DECENT));
@@ -130,7 +154,6 @@ public class FreestyleGatingTest {
                 .and("zabbix/host2.exeample.com", MyStatus.OK)
         );
 
-        JenkinsRule.WebClient wc = j.createWebClient();
         String gating = wc.goTo("gating").getBody().getTextContent();
 
         assertThat(gating, containsString("zabbix/host1.exeample.comBELLY_UP"));
