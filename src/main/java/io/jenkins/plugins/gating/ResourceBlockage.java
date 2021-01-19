@@ -41,6 +41,6 @@ public final class ResourceBlockage extends CauseOfBlockage {
 
     @Override
     public String getShortDescription() {
-        return "Some resource are not available: " + Joiner.on(", ").join(missing);
+        return "Some resources are not available: " + Joiner.on(", ").join(missing);
     }
 }

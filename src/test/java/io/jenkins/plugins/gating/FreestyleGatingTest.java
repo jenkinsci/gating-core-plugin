@@ -65,7 +65,7 @@ public class FreestyleGatingTest {
         Queue.Item item = runJob(status, new ResourceRequirementProperty(Arrays.asList(RES1, RES2)));
         CauseOfBlockage cob = item.getCauseOfBlockage();
         assertEquals(
-                String.format("Some resource are not available: %s is BELLY_UP, %s is DECENT", RES1, RES2),
+                String.format("Some resources are not available: %s is BELLY_UP, %s is DECENT", RES1, RES2),
                 cob.getShortDescription()
         );
     }
@@ -90,7 +90,7 @@ public class FreestyleGatingTest {
         Queue.Item item = runJob(status, new ResourceRequirementProperty(Arrays.asList(RES1, RES2)));
         CauseOfBlockage cob = item.getCauseOfBlockage();
         assertEquals(
-                String.format("Some resource are not available: %s is BELLY_UP", RES1),
+                String.format("Some resources are not available: %s is BELLY_UP", RES1),
                 cob.getShortDescription()
         );
     }

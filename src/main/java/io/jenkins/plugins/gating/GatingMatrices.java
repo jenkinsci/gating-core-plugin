@@ -123,6 +123,9 @@ public final class GatingMatrices implements RootAction {
             matricesMap.put(sourceLabel, snapshot);
             resourceMap = null; // Invalidate
         }
+
+        // TODO Only when something changed
+        GatingStep.matricesUpdated();
     }
 
     public static final class Snapshot {

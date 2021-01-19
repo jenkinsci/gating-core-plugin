@@ -26,11 +26,13 @@ import hudson.model.Job;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
 import net.sf.json.JSONObject;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,8 +41,9 @@ import java.util.Map;
 /**
  * Job property to declare the build require certain resources to be operational before the build can start.
  */
-public final class ResourceRequirementProperty extends JobProperty<Job<?, ?>> {
+public final class ResourceRequirementProperty extends JobProperty<Job<?, ?>> implements Serializable {
 
+    private static final long serialVersionUID = -4060336631507729998L;
     private final @Nonnull List<String> resources;
 
     @DataBoundConstructor
@@ -64,6 +67,9 @@ public final class ResourceRequirementProperty extends JobProperty<Job<?, ?>> {
         Map<String, ResourceStatus> metrics = availability.getStatusOfAllResources();
         for (String res : resources) {
             ResourceStatus actual = metrics.get(res);
+            if (actual == null) {
+                actual = ResourceStatus.Category.UNKNOWN;
+            }
             if (actual.getCategory() != ResourceStatus.Category.UP) {
                 missing.add(String.format("%s is %s", res, actual));
             }
@@ -76,6 +82,7 @@ public final class ResourceRequirementProperty extends JobProperty<Job<?, ?>> {
     }
 
     @Extension
+    @Symbol("gating")
     public static final class Desc extends JobPropertyDescriptor {
         @Override
         public @Nonnull String getDisplayName() {
