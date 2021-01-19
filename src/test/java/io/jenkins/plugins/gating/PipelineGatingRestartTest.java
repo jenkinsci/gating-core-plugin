@@ -22,12 +22,10 @@
 package io.jenkins.plugins.gating;
 
 import com.google.common.collect.ImmutableMap;
-import io.jenkins.plugins.statuspage_gating.api.Component;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Rule;
 import org.junit.Test;
-import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 /**
@@ -53,18 +51,18 @@ public class PipelineGatingRestartTest {
 
         j.then(j -> {
             GatingMatrices.get().update("foo", new GatingMatrices.Snapshot(ImmutableMap.of(
-                    "foo/bar/baz", Component.Status.OPERATIONAL,
-                    "foo/red/sox", Component.Status.MAJOR_OUTAGE
+                    "foo/bar/baz", ResourceStatus.Category.UP,
+                    "foo/red/sox", ResourceStatus.Category.DOWN
             )));
 
             r[0].await("Bstart", "Binside");
-            r[0].await("Some resources are not available: foo/red/sox is MAJOR_OUTAGE");
+            r[0].await("Some resources are not available: foo/red/sox is DOWN");
         });
 
         j.then(j -> {
             GatingMatrices.get().update("foo", new GatingMatrices.Snapshot(ImmutableMap.of(
-                    "foo/bar/baz", Component.Status.OPERATIONAL,
-                    "foo/red/sox", Component.Status.OPERATIONAL
+                    "foo/bar/baz", ResourceStatus.Category.UP,
+                    "foo/red/sox", ResourceStatus.Category.UP
             )));
 
             r[0].await("Binside");

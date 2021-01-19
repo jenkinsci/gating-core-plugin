@@ -1,10 +1,10 @@
-# statuspage-gating
+# gating-core
 
-[![Build Status](https://ci.jenkins.io/job/Plugins/job/statuspage-gating-plugin/job/master/badge/icon)](https://ci.jenkins.io/job/Plugins/job/statuspage-gating-plugin/job/master/)
-[![Contributors](https://img.shields.io/github/contributors/jenkinsci/statuspage-gating-plugin.svg)](https://github.com/jenkinsci/statuspage-gating-plugin/graphs/contributors)
-[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/statuspage-gating.svg)](https://plugins.jenkins.io/statuspage-gating)
-[![GitHub release](https://img.shields.io/github/release/jenkinsci/statuspage-gating-plugin.svg?label=changelog)](https://github.com/jenkinsci/statuspage-gating-plugin/releases/latest)
-[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/statuspage-gating.svg?color=blue)](https://plugins.jenkins.io/statuspage-gating)
+[![Build Status](https://ci.jenkins.io/job/Plugins/job/gating-core-plugin/job/master/badge/icon)](https://ci.jenkins.io/job/Plugins/job/gating-core-plugin/job/master/)
+[![Contributors](https://img.shields.io/github/contributors/jenkinsci/gating-core-plugin.svg)](https://github.com/jenkinsci/gating-core-plugin/graphs/contributors)
+[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/gating-core.svg)](https://plugins.jenkins.io/gating-core)
+[![GitHub release](https://img.shields.io/github/release/jenkinsci/gating-core-plugin.svg?label=changelog)](https://github.com/jenkinsci/gating-core-plugin/releases/latest)
+[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/gating-core.svg?color=blue)](https://plugins.jenkins.io/gating-core)
 
 ## Introduction
 

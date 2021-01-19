@@ -22,7 +22,6 @@
 package io.jenkins.plugins.gating;
 
 import com.google.common.collect.ImmutableMap;
-import io.jenkins.plugins.statuspage_gating.api.Component;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -50,16 +49,16 @@ public class PipelineGatingTest {
         r.await("Some resources are not available: foo/bar/baz is UNKNOWN, foo/red/sox is UNKNOWN");
 
         GatingMatrices.get().update("foo", new GatingMatrices.Snapshot(ImmutableMap.of(
-                "foo/bar/baz", Component.Status.OPERATIONAL,
-                "foo/red/sox", Component.Status.MAJOR_OUTAGE
+                "foo/bar/baz", ResourceStatus.Category.UP,
+                "foo/red/sox", ResourceStatus.Category.DOWN
         )));
 
         r.await("Bstart", "Binside");
-        r.await("Some resources are not available: foo/red/sox is MAJOR_OUTAGE");
+        r.await("Some resources are not available: foo/red/sox is DOWN");
 
         GatingMatrices.get().update("foo", new GatingMatrices.Snapshot(ImmutableMap.of(
-                "foo/bar/baz", Component.Status.OPERATIONAL,
-                "foo/red/sox", Component.Status.OPERATIONAL
+                "foo/bar/baz", ResourceStatus.Category.UP,
+                "foo/red/sox", ResourceStatus.Category.UP
         )));
 
         r.await("Binside");
@@ -71,8 +70,8 @@ public class PipelineGatingTest {
     @Test
     public void passWhenUp() throws Exception {
         GatingMatrices.get().update("foo", new GatingMatrices.Snapshot(ImmutableMap.of(
-                "foo/bar/baz", Component.Status.OPERATIONAL,
-                "foo/red/sox", Component.Status.OPERATIONAL
+                "foo/bar/baz", ResourceStatus.Category.UP,
+                "foo/red/sox", ResourceStatus.Category.UP
         )));
 
         WorkflowJob w = j.jenkins.createProject(WorkflowJob.class, "w");

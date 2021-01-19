@@ -1,2 +1,2 @@
 _extends: .github
-tag-template: statuspage-gating-$NEXT_MINOR_VERSION
+tag-template: gating-core-$NEXT_MINOR_VERSION

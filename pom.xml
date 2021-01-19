@@ -9,7 +9,7 @@
     </parent>
 
     <groupId>io.jenkins.plugins</groupId>
-    <artifactId>statuspage-gating</artifactId>
+    <artifactId>gating-core</artifactId>
     <version>${revision}${changelist}</version>
     <packaging>hpi</packaging>
     <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
@@ -22,6 +22,14 @@
         <java.level>8</java.level>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
     </properties>
+
+    <developers>
+        <developer>
+          <id>olivergondza</id>
+          <name>Oliver Gondža</name>
+          <email>ogondza@gmail.com</email>
+        </developer>
+    </developers>
 
     <dependencyManagement>
         <dependencies>
@@ -36,16 +44,6 @@
     </dependencyManagement>
 
     <dependencies>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>apache-httpcomponents-client-4-api</artifactId>
-            <version>4.5.10-2.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.11.1</version>
-        </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-job</artifactId>
@@ -65,20 +63,6 @@
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-step-api</artifactId>
             <version>2.23</version>
-        </dependency>
-
-
-        <dependency>
-            <artifactId>test-harness</artifactId>
-            <groupId>io.jenkins.configuration-as-code</groupId>
-            <version>1.35</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>3.7.0</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
