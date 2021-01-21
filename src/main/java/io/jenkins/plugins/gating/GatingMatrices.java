@@ -106,17 +106,8 @@ public final class GatingMatrices implements RootAction {
         }
     }
 
-    public void update(@Nonnull String sourceLabel, @Nonnull Snapshot snapshot) {
-        if (sourceLabel == null || sourceLabel.isEmpty()) throw new IllegalArgumentException("Empty source label");
-
-        for (String s : snapshot.statuses.keySet()) {
-            if (!s.startsWith(sourceLabel + DELIM)) {
-                throw new IllegalArgumentException(String.format(
-                        "Resource name (%s) not prefixed with source label (%s%s)", s, sourceLabel, DELIM
-                ));
-            }
-        }
-
+    public void update(@Nonnull Snapshot snapshot) {
+        String sourceLabel = snapshot.sourceLabel;
         LOGGER.fine("Received matrices update for source " + sourceLabel);
 
         synchronized (matricesLock) {
@@ -130,15 +121,34 @@ public final class GatingMatrices implements RootAction {
 
     public static final class Snapshot {
         private final long created = System.currentTimeMillis();
-        private final @Nonnull Map<String, ResourceStatus> statuses;
 
-        public Snapshot(@Nonnull Map<String, ResourceStatus> statuses) {
+        private final @Nonnull Map<String, ResourceStatus> statuses;
+        private final @Nonnull MatricesProvider provider;
+        private final @Nonnull String sourceLabel;
+
+        public Snapshot(
+                @Nonnull MatricesProvider provider,
+                @Nonnull String sourceLabel,
+                @Nonnull Map<String, ResourceStatus> statuses
+        ) {
+            if (sourceLabel == null || sourceLabel.isEmpty()) throw new IllegalArgumentException("Empty source label");
+            this.provider = provider;
+            this.sourceLabel = sourceLabel;
+
             if (statuses.containsKey(null) || statuses.containsKey("")) {
                 throw new IllegalArgumentException("Status map cannot contain empty resources");
             }
 
             if (statuses.containsValue(null)) {
                 throw new IllegalArgumentException("Status map cannot contain null statuses");
+            }
+
+            for (String s : statuses.keySet()) {
+                if (!s.startsWith(sourceLabel + DELIM)) {
+                    throw new IllegalArgumentException(String.format(
+                            "Resource name (%s) not prefixed with source label (%s%s)", s, sourceLabel, DELIM
+                    ));
+                }
             }
 
             TreeMap<String, ResourceStatus> out = new TreeMap<>(RESOURCE_ID_COMPARATOR);
@@ -152,18 +162,6 @@ public final class GatingMatrices implements RootAction {
 
         public @Nonnull Map<String, ResourceStatus> getStatuses() {
             return statuses;
-        }
-
-        public static Snapshot with(String name, ResourceStatus rs) {
-            HashMap<String, ResourceStatus> hm = new HashMap<>();
-            hm.put(name, rs);
-            return new Snapshot(hm);
-        }
-
-        public Snapshot and(String name, ResourceStatus rs) {
-            HashMap<String, ResourceStatus> hm = new HashMap<>(statuses);
-            hm.put(name, rs);
-            return new Snapshot(hm);
         }
     }
 }

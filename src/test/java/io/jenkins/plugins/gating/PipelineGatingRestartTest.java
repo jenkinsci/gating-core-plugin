@@ -28,9 +28,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
-/**
- * @author ogondza.
- */
 public class PipelineGatingRestartTest {
 
     @Rule public final RestartableJenkinsRule j = new RestartableJenkinsRule();
@@ -50,20 +47,20 @@ public class PipelineGatingRestartTest {
         });
 
         j.then(j -> {
-            GatingMatrices.get().update("foo", new GatingMatrices.Snapshot(ImmutableMap.of(
+            Utils.setStatus(ImmutableMap.of(
                     "foo/bar/baz", ResourceStatus.Category.UP,
                     "foo/red/sox", ResourceStatus.Category.DOWN
-            )));
+            ));
 
             r[0].await("Bstart", "Binside");
             r[0].await("Some resources are not available: foo/red/sox is DOWN");
         });
 
         j.then(j -> {
-            GatingMatrices.get().update("foo", new GatingMatrices.Snapshot(ImmutableMap.of(
+            Utils.setStatus(ImmutableMap.of(
                     "foo/bar/baz", ResourceStatus.Category.UP,
                     "foo/red/sox", ResourceStatus.Category.UP
-            )));
+            ));
 
             r[0].await("Binside");
             r[0].await("Bafter");

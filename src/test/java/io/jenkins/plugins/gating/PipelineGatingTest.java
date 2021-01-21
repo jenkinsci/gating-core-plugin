@@ -48,18 +48,18 @@ public class PipelineGatingTest {
         r.await("Bstart", "Binside");
         r.await("Some resources are not available: foo/bar/baz is UNKNOWN, foo/red/sox is UNKNOWN");
 
-        GatingMatrices.get().update("foo", new GatingMatrices.Snapshot(ImmutableMap.of(
+        Utils.setStatus(ImmutableMap.of(
                 "foo/bar/baz", ResourceStatus.Category.UP,
                 "foo/red/sox", ResourceStatus.Category.DOWN
-        )));
+        ));
 
         r.await("Bstart", "Binside");
         r.await("Some resources are not available: foo/red/sox is DOWN");
 
-        GatingMatrices.get().update("foo", new GatingMatrices.Snapshot(ImmutableMap.of(
+        Utils.setStatus(ImmutableMap.of(
                 "foo/bar/baz", ResourceStatus.Category.UP,
                 "foo/red/sox", ResourceStatus.Category.UP
-        )));
+        ));
 
         r.await("Binside");
         r.await("Bafter");
@@ -69,10 +69,10 @@ public class PipelineGatingTest {
 
     @Test
     public void passWhenUp() throws Exception {
-        GatingMatrices.get().update("foo", new GatingMatrices.Snapshot(ImmutableMap.of(
+        Utils.setStatus(ImmutableMap.of(
                 "foo/bar/baz", ResourceStatus.Category.UP,
                 "foo/red/sox", ResourceStatus.Category.UP
-        )));
+        ));
 
         WorkflowJob w = j.jenkins.createProject(WorkflowJob.class, "w");
         w.setDefinition(new CpsFlowDefinition(
