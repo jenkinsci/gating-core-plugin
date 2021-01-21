@@ -21,28 +21,25 @@
  */
 package io.jenkins.plugins.gating;
 
+import com.google.common.collect.ImmutableMap;
 import hudson.model.FreeStyleProject;
 import hudson.model.JobProperty;
 import hudson.model.Queue;
 import hudson.model.queue.CauseOfBlockage;
+import javaposse.jobdsl.plugin.ExecuteDslScripts;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
-import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static io.jenkins.plugins.gating.ResourceStatus.Category.DEGRADED;
-import static io.jenkins.plugins.gating.ResourceStatus.Category.DOWN;
-import static io.jenkins.plugins.gating.ResourceStatus.Category.UP;
+import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -59,10 +56,10 @@ public class FreestyleGatingTest {
     public void allDown() throws Exception {
 
         Map<String, ResourceStatus> status = new HashMap<>();
-        status.put(RES1, MyStatus.BELLY_UP);
-        status.put(RES2, MyStatus.DECENT);
+        status.put(RES1, TestStatus.BELLY_UP);
+        status.put(RES2, TestStatus.DECENT);
 
-        Queue.Item item = runJob(status, new ResourceRequirementProperty(Arrays.asList(RES1, RES2)));
+        Queue.Item item = runJob(status, new ResourceRequirementProperty(asList(RES1, RES2)));
         CauseOfBlockage cob = item.getCauseOfBlockage();
         assertEquals(
                 String.format("Some resources are not available: %s is BELLY_UP, %s is DECENT", RES1, RES2),
@@ -73,8 +70,8 @@ public class FreestyleGatingTest {
     @Test
     public void allUp() throws Exception {
         HashMap<String, ResourceStatus> status = new HashMap<>();
-        status.put(RES1, MyStatus.OK);
-        status.put(RES2, MyStatus.OK);
+        status.put(RES1, TestStatus.OK);
+        status.put(RES2, TestStatus.OK);
 
         runJob(status, new ResourceRequirementProperty(Collections.singletonList(RES2)));
         assertTrue(j.getInstance().getQueue().isEmpty());
@@ -84,10 +81,10 @@ public class FreestyleGatingTest {
     public void someDown() throws Exception {
 
         Map<String, ResourceStatus> status = new HashMap<>();
-        status.put(RES1, MyStatus.BELLY_UP);
-        status.put(RES2, MyStatus.OK);
+        status.put(RES1, TestStatus.BELLY_UP);
+        status.put(RES2, TestStatus.OK);
 
-        Queue.Item item = runJob(status, new ResourceRequirementProperty(Arrays.asList(RES1, RES2)));
+        Queue.Item item = runJob(status, new ResourceRequirementProperty(asList(RES1, RES2)));
         CauseOfBlockage cob = item.getCauseOfBlockage();
         assertEquals(
                 String.format("Some resources are not available: %s is BELLY_UP", RES1),
@@ -110,18 +107,18 @@ public class FreestyleGatingTest {
         assertEquals(expected, p.getProperty(ResourceRequirementProperty.class).getResources());
 
         // Something configured; nothing reported
-        expected = Arrays.asList(RES2, RES1);
+        expected = asList(RES2, RES1);
         p.addProperty(new ResourceRequirementProperty(expected));
         j.configRoundtrip(p);
         assertEquals(expected, p.getProperty(ResourceRequirementProperty.class).getResources());
 
         // Something configured; something reported
         Map<String, ResourceStatus> status = new HashMap<>();
-        status.put(RES1, MyStatus.OK);
-        status.put(RES2, MyStatus.BELLY_UP);
-        setStatus(status);
+        status.put(RES1, TestStatus.OK);
+        status.put(RES2, TestStatus.BELLY_UP);
+        Utils.setStatus(status);
 
-        expected = Arrays.asList(RES2, RES1);
+        expected = asList(RES2, RES1);
         p.addProperty(new ResourceRequirementProperty(expected));
         j.configRoundtrip(p);
         assertEquals(expected, p.getProperty(ResourceRequirementProperty.class).getResources());
@@ -144,15 +141,15 @@ public class FreestyleGatingTest {
 
     @Test
     public void ui() throws Exception {
-        JenkinsRule.WebClient wc = j.createWebClient();
 
+        JenkinsRule.WebClient wc = j.createWebClient();
         GatingMatrices gm = GatingMatrices.get();
-        gm.update("statuspage", GatingMatrices.Snapshot.with("statuspage/pageA/resourceC", MyStatus.OK));
-        gm.update("cachet", GatingMatrices.Snapshot.with("cachet/resource1", MyStatus.DECENT));
-        gm.update("zabbix", GatingMatrices.Snapshot
-                .with("zabbix/host1.exeample.com", MyStatus.BELLY_UP)
-                .and("zabbix/host2.exeample.com", MyStatus.OK)
-        );
+        gm.update(Utils.snapshot("statuspage/pageA/resourceC", TestStatus.OK));
+        gm.update(Utils.snapshot("cachet/resource1", TestStatus.DECENT));
+        gm.update(Utils.snapshot(ImmutableMap.of(
+                "zabbix/host1.exeample.com", TestStatus.BELLY_UP,
+                "zabbix/host2.exeample.com", TestStatus.OK
+        )));
 
         String gating = wc.goTo("gating").getBody().getTextContent();
 
@@ -162,26 +159,11 @@ public class FreestyleGatingTest {
         assertThat(gating, containsString("cachet/resource1DECENT"));
     }
 
-    public enum MyStatus implements ResourceStatus {
-        OK(UP), DECENT(DEGRADED), BELLY_UP(DOWN);
-
-        private final ResourceStatus.Category category;
-
-        MyStatus(ResourceStatus.Category category) {
-            this.category = category;
-        }
-
-        @Override
-        public @Nonnull Category getCategory() {
-            return category;
-        }
-    }
-
     private Queue.Item runJob(
             Map<String, ResourceStatus> status,
             JobProperty<? super FreeStyleProject> reqs
     ) throws IOException, InterruptedException {
-        setStatus(status);
+        Utils.setStatus(status);
 
         FreeStyleProject p = j.createFreeStyleProject();
 
@@ -204,7 +186,4 @@ public class FreestyleGatingTest {
         }
     }
 
-    private void setStatus(Map<String, ResourceStatus> status) {
-        GatingMatrices.get().update("statuspage", new GatingMatrices.Snapshot(status));
-    }
 }
