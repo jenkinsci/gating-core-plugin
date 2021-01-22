@@ -24,14 +24,17 @@ package io.jenkins.plugins.gating;
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.model.RootAction;
+import org.jenkinsci.Symbol;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
@@ -106,17 +109,56 @@ public final class GatingMatrices implements RootAction {
         }
     }
 
+    public List<String> getDetectedConflicts() {
+        ArrayList<String> conflictMessages = new ArrayList<>();
+
+        Map<String, MatricesProvider> labelToProvider = new HashMap<>();
+        for (MatricesProvider provider : ExtensionList.lookup(MatricesProvider.class)) {
+            for (String label : provider.getLabels()) {
+                MatricesProvider existingProvider = labelToProvider.get(label);
+                if (existingProvider != null) {
+                    conflictMessages.add(getFormat(provider, existingProvider, label));
+                } else {
+                    labelToProvider.put(label, provider);
+                }
+            }
+        }
+
+        return conflictMessages;
+    }
+
+    // TODO report failure
     public void update(@Nonnull Snapshot snapshot) {
         String sourceLabel = snapshot.sourceLabel;
         LOGGER.fine("Received matrices update for source " + sourceLabel);
 
         synchronized (matricesLock) {
+            Snapshot oldData = matricesMap.get(sourceLabel);
+            if (oldData != null && oldData.provider != snapshot.provider) {
+                // Source label conflict - ignore all but first
+                LOGGER.severe(getFormat(snapshot.provider, oldData.provider, sourceLabel));
+                return;
+            }
             matricesMap.put(sourceLabel, snapshot);
             resourceMap = null; // Invalidate
         }
 
         // TODO Only when something changed
         GatingStep.matricesUpdated();
+    }
+
+    private String getFormat(MatricesProvider lhs, MatricesProvider rhs, String sourceLabel) {
+        return String.format(
+                "Providers %s and %s have a colliding sourceLabel %s. Ignoring matrices update.",
+                getProviderDescription(lhs),
+                getProviderDescription(rhs),
+                sourceLabel
+        );
+    }
+
+    private String getProviderDescription(MatricesProvider p) {
+        Symbol s = p.getClass().getAnnotation(Symbol.class);
+        return s == null ? p.toString() : s.value()[0];
     }
 
     public static final class Snapshot {

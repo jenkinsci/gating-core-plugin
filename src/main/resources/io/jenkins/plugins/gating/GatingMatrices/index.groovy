@@ -52,9 +52,13 @@ l.layout(permission: Job.CONFIGURE) {
     l.main_panel {
         h1(gating.displayName)
 
+        gating.detectedConflicts.each {
+            p(strong(it))
+        }
+
         def matrices = gating.matrices
         if (matrices.isEmpty()) {
-            strong("No matrices available. Either no sources were configured, or the data have not been received yet.")
+            p(strong("No matrices available. Either no sources were configured, or the data have not been received yet."))
         } else {
             matrices.each { name, snapshot ->
                 h2(name)
