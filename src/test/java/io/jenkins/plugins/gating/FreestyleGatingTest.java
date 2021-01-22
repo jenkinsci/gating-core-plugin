@@ -163,7 +163,7 @@ public class FreestyleGatingTest {
     public void jobDsl() throws Exception {
         FreeStyleProject p = j.createFreeStyleProject();
         ExecuteDslScripts seed = new ExecuteDslScripts();
-        seed.setScriptText("job('foo') { properties { requireResources( resources(['foo/bar/baz', 'foo/red/sox']) ) } }");
+        seed.setScriptText("job('foo') { properties { requireResources { resources(['foo/bar/baz', 'foo/red/sox']) } } }");
         p.getBuildersList().add(seed);
 
         j.buildAndAssertSuccess(p);
