@@ -82,7 +82,7 @@ public final class ResourceRequirementProperty extends JobProperty<Job<?, ?>> im
     }
 
     @Extension
-    @Symbol("gating")
+    @Symbol("requireResources")
     public static final class Desc extends JobPropertyDescriptor {
         @Override
         public @Nonnull String getDisplayName() {

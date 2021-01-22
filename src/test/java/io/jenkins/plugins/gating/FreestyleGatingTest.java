@@ -26,6 +26,7 @@ import hudson.model.FreeStyleProject;
 import hudson.model.JobProperty;
 import hudson.model.Queue;
 import hudson.model.queue.CauseOfBlockage;
+import javaposse.jobdsl.plugin.ExecuteDslScripts;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -156,6 +157,20 @@ public class FreestyleGatingTest {
         assertThat(gating, containsString("zabbix/host2.exeample.comOK"));
         assertThat(gating, containsString("statuspage/pageA/resourceCOK"));
         assertThat(gating, containsString("cachet/resource1DECENT"));
+    }
+
+    @Test
+    public void jobDsl() throws Exception {
+        FreeStyleProject p = j.createFreeStyleProject();
+        ExecuteDslScripts seed = new ExecuteDslScripts();
+        seed.setScriptText("job('foo') { properties { requireResources { resources(['foo/bar/baz', 'foo/red/sox']) } } }");
+        p.getBuildersList().add(seed);
+
+        j.buildAndAssertSuccess(p);
+
+        FreeStyleProject foo = j.jenkins.getItem("foo", j.jenkins, FreeStyleProject.class);
+        ResourceRequirementProperty rrp = foo.getProperty(ResourceRequirementProperty.class);
+        assertEquals(asList("foo/bar/baz", "foo/red/sox"), rrp.getResources());
     }
 
     private Queue.Item runJob(
