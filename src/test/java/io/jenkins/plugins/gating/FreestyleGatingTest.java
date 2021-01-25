@@ -37,9 +37,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.jenkins.plugins.gating.ResourceStatus.Category.UP;
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -160,17 +162,30 @@ public class FreestyleGatingTest {
     }
 
     @Test
-    public void jobDsl() throws Exception {
-        FreeStyleProject p = j.createFreeStyleProject();
-        ExecuteDslScripts seed = new ExecuteDslScripts();
-        seed.setScriptText("job('foo') { properties { requireResources { resources(['foo/bar/baz', 'foo/red/sox']) } } }");
-        p.getBuildersList().add(seed);
+    public void jobDslFreestyle() throws Exception {
+        FreeStyleProject seed = j.createFreeStyleProject();
+        ExecuteDslScripts jobdsl = new ExecuteDslScripts();
+        jobdsl.setScriptText("job('foo') { properties { requireResources { resources(['foo/bar/baz', 'foo/red/sox']) } } }");
+        seed.getBuildersList().add(jobdsl);
 
-        j.buildAndAssertSuccess(p);
+        j.buildAndAssertSuccess(seed);
 
-        FreeStyleProject foo = j.jenkins.getItem("foo", j.jenkins, FreeStyleProject.class);
-        ResourceRequirementProperty rrp = foo.getProperty(ResourceRequirementProperty.class);
+        FreeStyleProject target = j.jenkins.getItem("foo", j.jenkins, FreeStyleProject.class);
+        ResourceRequirementProperty rrp = target.getProperty(ResourceRequirementProperty.class);
         assertEquals(asList("foo/bar/baz", "foo/red/sox"), rrp.getResources());
+
+        target.scheduleBuild2(0);
+        Thread.sleep(1000);
+        Queue.Item item = j.getInstance().getQueue().getItem(target);
+
+        assertThat(item.getCauseOfBlockage(), instanceOf(ResourceBlockage.class));
+
+        Utils.setStatus(ImmutableMap.of(
+                "foo/bar/baz", UP,
+                "foo/red/sox", UP
+        ));
+
+        item.getFuture().get();
     }
 
     private Queue.Item runJob(
