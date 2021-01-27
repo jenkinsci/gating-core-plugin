@@ -22,6 +22,7 @@
 package io.jenkins.plugins.gating;
 
 import hudson.Extension;
+import hudson.ExtensionList;
 import hudson.model.Job;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
@@ -99,6 +100,11 @@ public final class ResourceRequirementProperty extends JobProperty<Job<?, ?>> im
             }
 
             return null;
+        }
+
+        @Override
+        public boolean isApplicable(Class<? extends Job> jobType) {
+            return ExtensionList.lookup(MatricesProvider.class).size() > 0;
         }
     }
 }

@@ -21,6 +21,7 @@
  */
 package io.jenkins.plugins.gating;
 
+import com.google.common.collect.ImmutableSet;
 import hudson.model.FreeStyleProject;
 import hudson.model.JobProperty;
 import hudson.model.Queue;
@@ -29,10 +30,13 @@ import javaposse.jobdsl.plugin.ExecuteDslScripts;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.TestExtension;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static io.jenkins.plugins.gating.ResourceStatus.Category.UP;
 import static io.jenkins.plugins.gating.Utils.snapshot;
@@ -48,6 +52,13 @@ public class FreestyleGatingTest {
 
     public static final String RES1 = "statuspage/pageA/my-resource";
     public static final String RES2 = "statuspage/Page #3/The Resource";
+    @TestExtension
+    public static final class Provider implements MatricesProvider {
+        @Override
+        public @Nonnull Set<String> getLabels() {
+            return ImmutableSet.of("statuspage");
+        }
+    }
 
     @Rule
     public final JenkinsRule j = new JenkinsRule();
@@ -139,6 +150,7 @@ public class FreestyleGatingTest {
         j.configRoundtrip(p);
         assertNull(p.getProperty(ResourceRequirementProperty.class));
     }
+
 
     @Test
     public void ui() throws Exception {
