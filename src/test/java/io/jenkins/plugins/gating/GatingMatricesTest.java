@@ -22,14 +22,12 @@
 package io.jenkins.plugins.gating;
 
 import hudson.ExtensionList;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
 
 import javax.annotation.Nonnull;
-import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -52,24 +50,24 @@ public class GatingMatricesTest {
         MatricesProvider pb = ExtensionList.lookupSingleton(BMatricesProvider.class);
         MatricesProvider px = ExtensionList.lookupSingleton(XMatricesProvider.class);
 
-        GatingMatrices.Snapshot pau = new GatingMatrices.Snapshot(pa, "a", Collections.singletonMap("a/a", ResourceStatus.Category.UP));
+        MatricesSnapshot pau = Utils.snapshot(pa, "a/a", ResourceStatus.Category.UP);
         gm.update(pau);
         gm.update(pau);
 
-        GatingMatrices.Snapshot pbu = new GatingMatrices.Snapshot(pb, "bb", Collections.singletonMap("bb/bb", ResourceStatus.Category.DOWN));
+        MatricesSnapshot pbu = Utils.snapshot(pb, "bb/bb", ResourceStatus.Category.DOWN);
         gm.update(pbu);
 
         // Colliding config, but unique labels reported
-        GatingMatrices.Snapshot pxu = new GatingMatrices.Snapshot(px, "x", Collections.singletonMap("x/x", ResourceStatus.Category.UP));
+        MatricesSnapshot pxu = Utils.snapshot(px, "x/x", ResourceStatus.Category.UP);
         gm.update(pxu);
 
-        GatingMatrices.Snapshot expected = gm.getMatrices().get("bb");
-        pxu = new GatingMatrices.Snapshot(px, "bb", Collections.singletonMap("bb/bb", ResourceStatus.Category.UP));
+        MatricesSnapshot expected = gm.getMatrices().get("bb");
+        pxu = Utils.snapshot(px, "bb/bb", ResourceStatus.Category.UP);
         gm.update(pxu);
         assertSame(expected, gm.getMatrices().get("bb"));
 
 
-        j.interactiveBreak(); // TEST report in UI
+        //j.interactiveBreak(); // TEST report in UI
     }
 
     public static class Provider implements MatricesProvider {

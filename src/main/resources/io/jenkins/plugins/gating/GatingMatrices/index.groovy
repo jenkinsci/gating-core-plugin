@@ -23,6 +23,7 @@ package io.jenkins.plugins.gating.GatingMatrices
 
 import hudson.model.Job
 import io.jenkins.plugins.gating.GatingMatrices
+import io.jenkins.plugins.gating.MatricesSnapshot
 
 def l = namespace(lib.LayoutTagLib)
 GatingMatrices gating = (GatingMatrices) my
@@ -60,17 +61,18 @@ l.layout(permission: Job.CONFIGURE) {
         if (matrices.isEmpty()) {
             p(strong("No matrices available. Either no sources were configured, or the data have not been received yet."))
         } else {
-            matrices.each { name, snapshot ->
-                h2(name)
+            matrices.each { sourceName, snapshot ->
+                h2(sourceName)
                 small(snapshot.created)
                 table(class: "pane sortable bigtable", width: "100%", id: "matrices") {
                     tr {
                         th { text("Resource") }
                         th { text("Status") }
                     }
-                    snapshot.statuses.each { resource, status ->
+                    snapshot.statuses.each { resourceName, resource ->
+                        def status = resource.status
                         tr {
-                            td { text(resource) }
+                            td { text(resourceName) }
                             td(class: status.getCategory().name()) {
                                 strong(text(status))
                                 def category = status.getCategory()

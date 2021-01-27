@@ -32,7 +32,6 @@ import javax.annotation.concurrent.GuardedBy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +55,7 @@ public final class GatingMatrices implements RootAction {
      * Updates are only performed by adding/replacing/removing of values per given key.
      */
     @GuardedBy("matricesLock")
-    private @Nonnull final Map<String, Snapshot> matricesMap = new HashMap<>();
+    private @Nonnull final Map<String, MatricesSnapshot> matricesMap = new HashMap<>();
 
     /**
      * Map of all resources.
@@ -64,7 +63,7 @@ public final class GatingMatrices implements RootAction {
      * This is a cache to be invalidated when resource update arrives and populated when requested.
      */
     @GuardedBy("matricesLock")
-    private @CheckForNull Map<String, ResourceStatus> resourceMap = null;
+    private @CheckForNull Map<String, MatricesSnapshot.Resource> resourceMap = null;
 
     public static @Nonnull GatingMatrices get() {
         return ExtensionList.lookupSingleton(GatingMatrices.class);
@@ -85,7 +84,7 @@ public final class GatingMatrices implements RootAction {
         return "gating";
     }
 
-    public @Nonnull Map<String, Snapshot> getMatrices() {
+    public @Nonnull Map<String, MatricesSnapshot> getMatrices() {
         synchronized (matricesLock) {
             return new HashMap<>(matricesMap);
         }
@@ -94,14 +93,14 @@ public final class GatingMatrices implements RootAction {
     /**
      * Get all resources and their status. The collection is immutable.
      */
-    public @Nonnull Map<String, ResourceStatus> getStatusOfAllResources() {
+    public @Nonnull Map<String, MatricesSnapshot.Resource> getStatusOfAllResources() {
         synchronized (matricesLock) {
             if (resourceMap != null) return resourceMap;
 
-            Map<String, ResourceStatus> statuses = new TreeMap<>(RESOURCE_ID_COMPARATOR);
-            for (Snapshot snapshot : matricesMap.values()) {
+            Map<String, MatricesSnapshot.Resource> statuses = new TreeMap<>(RESOURCE_ID_COMPARATOR);
+            for (MatricesSnapshot snapshot : matricesMap.values()) {
                 // Names are guaranteed not to collide
-                statuses.putAll(snapshot.statuses);
+                statuses.putAll(snapshot.getStatuses());
             }
 
             resourceMap = Collections.unmodifiableMap(statuses);
@@ -128,15 +127,15 @@ public final class GatingMatrices implements RootAction {
     }
 
     // TODO report failure
-    public void update(@Nonnull Snapshot snapshot) {
-        String sourceLabel = snapshot.sourceLabel;
+    public void update(@Nonnull MatricesSnapshot snapshot) {
+        String sourceLabel = snapshot.getSourceLabel();
         LOGGER.fine("Received matrices update for source " + sourceLabel);
 
         synchronized (matricesLock) {
-            Snapshot oldData = matricesMap.get(sourceLabel);
-            if (oldData != null && oldData.provider != snapshot.provider) {
+            MatricesSnapshot oldData = matricesMap.get(sourceLabel);
+            if (oldData != null && oldData.getProvider() != snapshot.getProvider()) {
                 // Source label conflict - ignore all but first
-                LOGGER.severe(getFormat(snapshot.provider, oldData.provider, sourceLabel));
+                LOGGER.severe(getFormat(snapshot.getProvider(), oldData.getProvider(), sourceLabel));
                 return;
             }
             matricesMap.put(sourceLabel, snapshot);
@@ -159,51 +158,5 @@ public final class GatingMatrices implements RootAction {
     private String getProviderDescription(MatricesProvider p) {
         Symbol s = p.getClass().getAnnotation(Symbol.class);
         return s == null ? p.toString() : s.value()[0];
-    }
-
-    public static final class Snapshot {
-        private final long created = System.currentTimeMillis();
-
-        private final @Nonnull Map<String, ResourceStatus> statuses;
-        private final @Nonnull MatricesProvider provider;
-        private final @Nonnull String sourceLabel;
-
-        public Snapshot(
-                @Nonnull MatricesProvider provider,
-                @Nonnull String sourceLabel,
-                @Nonnull Map<String, ResourceStatus> statuses
-        ) {
-            if (sourceLabel == null || sourceLabel.isEmpty()) throw new IllegalArgumentException("Empty source label");
-            this.provider = provider;
-            this.sourceLabel = sourceLabel;
-
-            if (statuses.containsKey(null) || statuses.containsKey("")) {
-                throw new IllegalArgumentException("Status map cannot contain empty resources");
-            }
-
-            if (statuses.containsValue(null)) {
-                throw new IllegalArgumentException("Status map cannot contain null statuses");
-            }
-
-            for (String s : statuses.keySet()) {
-                if (!s.startsWith(sourceLabel + DELIM)) {
-                    throw new IllegalArgumentException(String.format(
-                            "Resource name (%s) not prefixed with source label (%s%s)", s, sourceLabel, DELIM
-                    ));
-                }
-            }
-
-            TreeMap<String, ResourceStatus> out = new TreeMap<>(RESOURCE_ID_COMPARATOR);
-            out.putAll(statuses);
-            this.statuses = Collections.unmodifiableMap(out);
-        }
-
-        public @Nonnull Date getCreated() {
-            return new Date(created);
-        }
-
-        public @Nonnull Map<String, ResourceStatus> getStatuses() {
-            return statuses;
-        }
     }
 }

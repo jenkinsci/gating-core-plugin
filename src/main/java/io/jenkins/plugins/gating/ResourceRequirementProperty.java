@@ -64,14 +64,16 @@ public final class ResourceRequirementProperty extends JobProperty<Job<?, ?>> im
     public @CheckForNull ResourceBlockage evaluate(GatingMatrices availability) {
         ArrayList<String> missing = new ArrayList<>();
 
-        Map<String, ResourceStatus> metrics = availability.getStatusOfAllResources();
-        for (String res : resources) {
-            ResourceStatus actual = metrics.get(res);
-            if (actual == null) {
-                actual = ResourceStatus.Category.UNKNOWN;
-            }
-            if (actual.getCategory() != ResourceStatus.Category.UP) {
-                missing.add(String.format("%s is %s", res, actual));
+        Map<String, MatricesSnapshot.Resource> metrics = availability.getStatusOfAllResources();
+        for (String resourceName : resources) {
+            MatricesSnapshot.Resource resource = metrics.get(resourceName);
+            ResourceStatus status = resource == null
+                    ? ResourceStatus.Category.UNKNOWN
+                    : resource.getStatus()
+            ;
+
+            if (status != ResourceStatus.Category.UP && status.getCategory() != ResourceStatus.Category.UP) {
+                missing.add(String.format("%s is %s", resourceName, status));
             }
         }
 

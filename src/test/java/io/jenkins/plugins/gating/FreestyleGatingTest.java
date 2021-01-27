@@ -21,7 +21,6 @@
  */
 package io.jenkins.plugins.gating;
 
-import com.google.common.collect.ImmutableMap;
 import hudson.model.FreeStyleProject;
 import hudson.model.JobProperty;
 import hudson.model.Queue;
@@ -33,11 +32,10 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static io.jenkins.plugins.gating.ResourceStatus.Category.UP;
+import static io.jenkins.plugins.gating.Utils.snapshot;
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -56,12 +54,12 @@ public class FreestyleGatingTest {
 
     @Test
     public void allDown() throws Exception {
+        MatricesSnapshot snapshot = snapshot(
+                RES1, TestStatus.BELLY_UP,
+                RES2, TestStatus.DECENT
+        );
 
-        Map<String, ResourceStatus> status = new HashMap<>();
-        status.put(RES1, TestStatus.BELLY_UP);
-        status.put(RES2, TestStatus.DECENT);
-
-        Queue.Item item = runJob(status, new ResourceRequirementProperty(asList(RES1, RES2)));
+        Queue.Item item = runJob(snapshot, new ResourceRequirementProperty(asList(RES1, RES2)));
         CauseOfBlockage cob = item.getCauseOfBlockage();
         assertEquals(
                 String.format("Some resources are not available: %s is BELLY_UP, %s is DECENT", RES1, RES2),
@@ -71,22 +69,23 @@ public class FreestyleGatingTest {
 
     @Test
     public void allUp() throws Exception {
-        HashMap<String, ResourceStatus> status = new HashMap<>();
-        status.put(RES1, TestStatus.OK);
-        status.put(RES2, TestStatus.OK);
+        MatricesSnapshot snapshot = snapshot(
+                RES1, TestStatus.OK,
+                RES2, TestStatus.OK
+        );
 
-        runJob(status, new ResourceRequirementProperty(Collections.singletonList(RES2)));
+        runJob(snapshot, new ResourceRequirementProperty(Collections.singletonList(RES2)));
         assertTrue(j.getInstance().getQueue().isEmpty());
     }
 
     @Test
     public void someDown() throws Exception {
+        MatricesSnapshot snapshot = snapshot(
+                RES1, TestStatus.BELLY_UP,
+                RES2, TestStatus.OK
+        );
 
-        Map<String, ResourceStatus> status = new HashMap<>();
-        status.put(RES1, TestStatus.BELLY_UP);
-        status.put(RES2, TestStatus.OK);
-
-        Queue.Item item = runJob(status, new ResourceRequirementProperty(asList(RES1, RES2)));
+        Queue.Item item = runJob(snapshot, new ResourceRequirementProperty(asList(RES1, RES2)));
         CauseOfBlockage cob = item.getCauseOfBlockage();
         assertEquals(
                 String.format("Some resources are not available: %s is BELLY_UP", RES1),
@@ -115,10 +114,10 @@ public class FreestyleGatingTest {
         assertEquals(expected, p.getProperty(ResourceRequirementProperty.class).getResources());
 
         // Something configured; something reported
-        Map<String, ResourceStatus> status = new HashMap<>();
-        status.put(RES1, TestStatus.OK);
-        status.put(RES2, TestStatus.BELLY_UP);
-        Utils.setStatus(status);
+        Utils.setStatus(Utils.snapshot(
+                RES1, TestStatus.OK,
+                RES2, TestStatus.BELLY_UP
+        ));
 
         expected = asList(RES2, RES1);
         p.addProperty(new ResourceRequirementProperty(expected));
@@ -146,12 +145,12 @@ public class FreestyleGatingTest {
 
         JenkinsRule.WebClient wc = j.createWebClient();
         GatingMatrices gm = GatingMatrices.get();
-        gm.update(Utils.snapshot("statuspage/pageA/resourceC", TestStatus.OK));
-        gm.update(Utils.snapshot("cachet/resource1", TestStatus.DECENT));
-        gm.update(Utils.snapshot(ImmutableMap.of(
+        gm.update(snapshot("statuspage/pageA/resourceC", TestStatus.OK));
+        gm.update(snapshot("cachet/resource1", TestStatus.DECENT));
+        gm.update(snapshot(
                 "zabbix/host1.exeample.com", TestStatus.BELLY_UP,
                 "zabbix/host2.exeample.com", TestStatus.OK
-        )));
+        ));
 
         String gating = wc.goTo("gating").getBody().getTextContent();
 
@@ -180,7 +179,7 @@ public class FreestyleGatingTest {
 
         assertThat(item.getCauseOfBlockage(), instanceOf(ResourceBlockage.class));
 
-        Utils.setStatus(ImmutableMap.of(
+        Utils.setStatus(Utils.snapshot(
                 "foo/bar/baz", UP,
                 "foo/red/sox", UP
         ));
@@ -188,10 +187,7 @@ public class FreestyleGatingTest {
         item.getFuture().get();
     }
 
-    private Queue.Item runJob(
-            Map<String, ResourceStatus> status,
-            JobProperty<? super FreeStyleProject> reqs
-    ) throws IOException, InterruptedException {
+    private Queue.Item runJob(MatricesSnapshot status, JobProperty<? super FreeStyleProject> reqs) throws IOException, InterruptedException {
         Utils.setStatus(status);
 
         FreeStyleProject p = j.createFreeStyleProject();
@@ -214,5 +210,4 @@ public class FreestyleGatingTest {
             Thread.sleep(1000);
         }
     }
-
 }

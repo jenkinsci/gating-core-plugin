@@ -30,24 +30,54 @@ import java.util.Set;
 
 public class Utils {
 
-    static void setStatus(Map<String, ResourceStatus> status) {
+    static void setStatus(Map<String, MatricesSnapshot.Resource> status) {
         GatingMatrices.get().update(snapshot(status));
     }
 
-    public static GatingMatrices.Snapshot snapshot(String name, ResourceStatus rs) {
-        HashMap<String, ResourceStatus> hm = new HashMap<>();
-        hm.put(name, rs);
+    static void setStatus(MatricesSnapshot snapshot) {
+        GatingMatrices.get().update(snapshot);
+    }
+
+    public static MatricesSnapshot snapshot(String name, ResourceStatus rs) {
+        HashMap<String, MatricesSnapshot.Resource> hm = new HashMap<>();
+        hm.put(name, new MatricesSnapshot.Resource(name, rs));
         return snapshot(hm);
     }
 
-    public static GatingMatrices.Snapshot snapshot(Map<String, ResourceStatus> resources) {
+    public static MatricesSnapshot snapshot(String name0, ResourceStatus rs0, String name1, ResourceStatus rs1) {
+        HashMap<String, MatricesSnapshot.Resource> hm = new HashMap<>();
+        hm.put(name0, new MatricesSnapshot.Resource(name0, rs0));
+        hm.put(name1, new MatricesSnapshot.Resource(name1, rs1));
+        return snapshot(hm);
+    }
+
+    public static MatricesSnapshot snapshot(MatricesProvider provider, String name0, ResourceStatus rs0, String name1, ResourceStatus rs1) {
+        HashMap<String, MatricesSnapshot.Resource> hm = new HashMap<>();
+        hm.put(name0, new MatricesSnapshot.Resource(name0, rs0));
+        hm.put(name1, new MatricesSnapshot.Resource(name1, rs1));
+        return snapshot(provider, hm);
+    }
+
+    public static MatricesSnapshot snapshot(Map<String, MatricesSnapshot.Resource> resources) {
         String name = resources.keySet().iterator().next();
         String sourceLabel = name.replaceAll("/.*", "");
         MatricesProvider provider = new MatricesProvider() {
-            @Nonnull @Override public Set<String> getLabels() {
+            @Override public @Nonnull Set<String> getLabels() {
                 return ImmutableSet.of(sourceLabel);
             }
         };
-        return new GatingMatrices.Snapshot(provider, sourceLabel, resources);
+        return snapshot(provider, resources);
+    }
+
+    public static MatricesSnapshot snapshot(MatricesProvider provider, String name, ResourceStatus rs) {
+        HashMap<String, MatricesSnapshot.Resource> hm = new HashMap<>();
+        hm.put(name, new MatricesSnapshot.Resource(name, rs));
+        return snapshot(provider, hm);
+    }
+
+    public static MatricesSnapshot snapshot(MatricesProvider provider, Map<String, MatricesSnapshot.Resource> resources) {
+        String name = resources.keySet().iterator().next();
+        String sourceLabel = name.replaceAll("/.*", "");
+        return new MatricesSnapshot(provider, sourceLabel, resources);
     }
 }

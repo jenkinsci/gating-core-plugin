@@ -47,7 +47,7 @@ public class PipelineGatingRestartTest {
         });
 
         j.then(j -> {
-            Utils.setStatus(ImmutableMap.of(
+            Utils.setStatus(Utils.snapshot(
                     "foo/bar/baz", ResourceStatus.Category.UP,
                     "foo/red/sox", ResourceStatus.Category.DOWN
             ));
@@ -57,7 +57,7 @@ public class PipelineGatingRestartTest {
         });
 
         j.then(j -> {
-            Utils.setStatus(ImmutableMap.of(
+            Utils.setStatus(Utils.snapshot(
                     "foo/bar/baz", ResourceStatus.Category.UP,
                     "foo/red/sox", ResourceStatus.Category.UP
             ));
