@@ -59,8 +59,10 @@ l.layout(permission: Job.CONFIGURE) {
     l.main_panel {
         h1(gating.displayName)
 
-        gating.detectedConflicts.each {
-            p(strong(it))
+        gating.detectedConflicts.each {msg ->
+            p {
+                strong(style: "color:red;") { text(msg) }
+            }
         }
 
         def matrices = gating.matrices

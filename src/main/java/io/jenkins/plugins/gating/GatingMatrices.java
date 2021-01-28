@@ -25,6 +25,8 @@ import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.model.RootAction;
 import org.jenkinsci.Symbol;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
@@ -98,6 +100,7 @@ public final class GatingMatrices implements RootAction {
         }
     }
 
+    @Restricted(NoExternalUse.class)
     public @Nonnull Map<String, MatricesSnapshot.Error> getErrors() {
         synchronized (matricesLock) {
             if (errorMap.isEmpty()) return Collections.emptyMap();
@@ -124,6 +127,7 @@ public final class GatingMatrices implements RootAction {
         }
     }
 
+    @Restricted(NoExternalUse.class)
     public List<String> getDetectedConflicts() {
         ArrayList<String> conflictMessages = new ArrayList<>();
 
@@ -147,12 +151,8 @@ public final class GatingMatrices implements RootAction {
         LOGGER.fine("Received matrices update for source " + sourceLabel);
 
         synchronized (matricesLock) {
-            MatricesSnapshot oldData = matricesMap.get(sourceLabel);
-            if (oldData != null && oldData.getProvider() != snapshot.getProvider()) {
-                // Source label conflict - ignore all but first
-                LOGGER.severe(getFormat(snapshot.getProvider(), oldData.getProvider(), sourceLabel));
-                return;
-            }
+            if (!isMatchingProvider(sourceLabel, snapshot.getProvider())) return;
+
             matricesMap.put(sourceLabel, snapshot);
             errorMap.remove(sourceLabel); // Erase previous error
             resourceMap = null; // Invalidate cache
@@ -167,15 +167,28 @@ public final class GatingMatrices implements RootAction {
         LOGGER.info("Received error for source " + sourceLabel);
 
         synchronized (matricesLock) {
-            MatricesSnapshot oldData = matricesMap.get(sourceLabel);
-            if (oldData != null && oldData.getProvider() != error.getProvider()) {
-                // Source label conflict - ignore all but first
-                LOGGER.severe(getFormat(error.getProvider(), oldData.getProvider(), sourceLabel));
-                return;
-            }
+            if (!isMatchingProvider(sourceLabel, error.getProvider())) return;
+
             // Track error. Do not remove latest known data, nor the cache.
             errorMap.put(sourceLabel, error);
         }
+    }
+
+    private boolean isMatchingProvider(String sourceLabel, MatricesProvider incomingProvider) {
+        MatricesSnapshot oldData = matricesMap.get(sourceLabel);
+        if (oldData != null && oldData.getProvider() != incomingProvider) {
+            // Source label conflict - ignore all but first
+            LOGGER.severe(getFormat(incomingProvider, oldData.getProvider(), sourceLabel));
+            return false;
+        }
+        MatricesSnapshot.Error oldError = errorMap.get(sourceLabel);
+        if (oldError != null && oldError.getProvider() != incomingProvider) {
+            // Source label conflict - ignore all but first
+            LOGGER.severe(getFormat(incomingProvider, oldError.getProvider(), sourceLabel));
+            return false;
+        }
+
+        return true;
     }
 
     private String getFormat(MatricesProvider lhs, MatricesProvider rhs, String sourceLabel) {
