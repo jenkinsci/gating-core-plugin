@@ -133,5 +133,10 @@ public final class MatricesSnapshot {
         public int hashCode() {
             return Objects.hash(name, status, description);
         }
+
+        @Override
+        public String toString() {
+            return String.format("Resource{name='%s', status=%s, description='%s'}", name, status, description);
+        }
     }
 }
