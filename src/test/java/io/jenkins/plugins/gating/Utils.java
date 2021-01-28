@@ -30,38 +30,38 @@ import java.util.Set;
 
 public class Utils {
 
-    static void setStatus(Map<String, MatricesSnapshot.Resource> status) {
-        GatingMatrices.get().update(snapshot(status));
+    static void setStatus(Map<String, MetricsSnapshot.Resource> status) {
+        GatingMetrics.get().update(snapshot(status));
     }
 
-    static void setStatus(MatricesSnapshot snapshot) {
-        GatingMatrices.get().update(snapshot);
+    static void setStatus(MetricsSnapshot snapshot) {
+        GatingMetrics.get().update(snapshot);
     }
 
-    public static MatricesSnapshot snapshot(String name, ResourceStatus rs) {
-        HashMap<String, MatricesSnapshot.Resource> hm = new HashMap<>();
-        hm.put(name, new MatricesSnapshot.Resource(name, rs));
+    public static MetricsSnapshot snapshot(String name, ResourceStatus rs) {
+        HashMap<String, MetricsSnapshot.Resource> hm = new HashMap<>();
+        hm.put(name, new MetricsSnapshot.Resource(name, rs));
         return snapshot(hm);
     }
 
-    public static MatricesSnapshot snapshot(String name0, ResourceStatus rs0, String name1, ResourceStatus rs1) {
-        HashMap<String, MatricesSnapshot.Resource> hm = new HashMap<>();
-        hm.put(name0, new MatricesSnapshot.Resource(name0, rs0));
-        hm.put(name1, new MatricesSnapshot.Resource(name1, rs1));
+    public static MetricsSnapshot snapshot(String name0, ResourceStatus rs0, String name1, ResourceStatus rs1) {
+        HashMap<String, MetricsSnapshot.Resource> hm = new HashMap<>();
+        hm.put(name0, new MetricsSnapshot.Resource(name0, rs0));
+        hm.put(name1, new MetricsSnapshot.Resource(name1, rs1));
         return snapshot(hm);
     }
 
-    public static MatricesSnapshot snapshot(MatricesProvider provider, String name0, ResourceStatus rs0, String name1, ResourceStatus rs1) {
-        HashMap<String, MatricesSnapshot.Resource> hm = new HashMap<>();
-        hm.put(name0, new MatricesSnapshot.Resource(name0, rs0));
-        hm.put(name1, new MatricesSnapshot.Resource(name1, rs1));
+    public static MetricsSnapshot snapshot(MetricsProvider provider, String name0, ResourceStatus rs0, String name1, ResourceStatus rs1) {
+        HashMap<String, MetricsSnapshot.Resource> hm = new HashMap<>();
+        hm.put(name0, new MetricsSnapshot.Resource(name0, rs0));
+        hm.put(name1, new MetricsSnapshot.Resource(name1, rs1));
         return snapshot(provider, hm);
     }
 
-    public static MatricesSnapshot snapshot(Map<String, MatricesSnapshot.Resource> resources) {
+    public static MetricsSnapshot snapshot(Map<String, MetricsSnapshot.Resource> resources) {
         String name = resources.keySet().iterator().next();
         String sourceLabel = name.replaceAll("/.*", "");
-        MatricesProvider provider = new MatricesProvider() {
+        MetricsProvider provider = new MetricsProvider() {
             @Override public @Nonnull Set<String> getLabels() {
                 return ImmutableSet.of(sourceLabel);
             }
@@ -69,15 +69,15 @@ public class Utils {
         return snapshot(provider, resources);
     }
 
-    public static MatricesSnapshot snapshot(MatricesProvider provider, String name, ResourceStatus rs) {
-        HashMap<String, MatricesSnapshot.Resource> hm = new HashMap<>();
-        hm.put(name, new MatricesSnapshot.Resource(name, rs));
+    public static MetricsSnapshot snapshot(MetricsProvider provider, String name, ResourceStatus rs) {
+        HashMap<String, MetricsSnapshot.Resource> hm = new HashMap<>();
+        hm.put(name, new MetricsSnapshot.Resource(name, rs));
         return snapshot(provider, hm);
     }
 
-    public static MatricesSnapshot snapshot(MatricesProvider provider, Map<String, MatricesSnapshot.Resource> resources) {
+    public static MetricsSnapshot snapshot(MetricsProvider provider, Map<String, MetricsSnapshot.Resource> resources) {
         String name = resources.keySet().iterator().next();
         String sourceLabel = name.replaceAll("/.*", "");
-        return new MatricesSnapshot(provider, sourceLabel, resources);
+        return new MetricsSnapshot(provider, sourceLabel, resources);
     }
 }

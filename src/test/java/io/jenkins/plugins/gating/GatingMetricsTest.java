@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static hudson.ExtensionList.lookupSingleton;
-import static io.jenkins.plugins.gating.GatingMatrices.get;
+import static io.jenkins.plugins.gating.GatingMetrics.get;
 import static io.jenkins.plugins.gating.Utils.snapshot;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anEmptyMap;
@@ -43,82 +43,82 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 
-public class GatingMatricesTest {
+public class GatingMetricsTest {
 
     @Rule public final JenkinsRule j = new JenkinsRule();
 
-    @TestExtension public static class AMatricesProvider extends Provider { public AMatricesProvider() { super("a"); } }
-    @TestExtension public static class BMatricesProvider extends Provider { public BMatricesProvider() { super("b", "bb"); } }
-    @TestExtension public static class XMatricesProvider extends Provider { public XMatricesProvider() { super("x", "bb"); } }
+    @TestExtension public static class AMetricsProvider extends Provider { public AMetricsProvider() { super("a"); } }
+    @TestExtension public static class BMetricsProvider extends Provider { public BMetricsProvider() { super("b", "bb"); } }
+    @TestExtension public static class XMetricsProvider extends Provider { public XMetricsProvider() { super("x", "bb"); } }
 
     @Test
     public void updateWithOverlappingSourceLabels() throws Exception {
-        GatingMatrices gm = get();
+        GatingMetrics gm = get();
 
-        MatricesProvider pa = lookupSingleton(AMatricesProvider.class);
-        MatricesProvider pb = lookupSingleton(BMatricesProvider.class);
-        MatricesProvider px = lookupSingleton(XMatricesProvider.class);
+        MetricsProvider pa = lookupSingleton(AMetricsProvider.class);
+        MetricsProvider pb = lookupSingleton(BMetricsProvider.class);
+        MetricsProvider px = lookupSingleton(XMetricsProvider.class);
 
-        MatricesSnapshot pau = Utils.snapshot(pa, "a/a", ResourceStatus.Category.UP);
+        MetricsSnapshot pau = Utils.snapshot(pa, "a/a", ResourceStatus.Category.UP);
         gm.update(pau);
         gm.update(pau);
 
-        MatricesSnapshot pbu = Utils.snapshot(pb, "bb/bb", ResourceStatus.Category.DOWN);
+        MetricsSnapshot pbu = Utils.snapshot(pb, "bb/bb", ResourceStatus.Category.DOWN);
         gm.update(pbu);
 
         // Colliding config, but unique labels reported
-        MatricesSnapshot pxu = Utils.snapshot(px, "x/x", ResourceStatus.Category.UP);
+        MetricsSnapshot pxu = Utils.snapshot(px, "x/x", ResourceStatus.Category.UP);
         gm.update(pxu);
 
-        MatricesSnapshot expected = gm.getMatrices().get("bb");
+        MetricsSnapshot expected = gm.getMetrics().get("bb");
         pxu = Utils.snapshot(px, "bb/bb", ResourceStatus.Category.UP);
         gm.update(pxu);
-        assertSame(expected, gm.getMatrices().get("bb"));
+        assertSame(expected, gm.getMetrics().get("bb"));
 
         JenkinsRule.WebClient wc = j.createWebClient();
         String text = wc.goTo("gating").getBody().getTextContent();
-        assertThat(text, containsString("have a colliding sourceLabel bb. Ignoring matrices update."));
+        assertThat(text, containsString("have a colliding sourceLabel bb. Ignoring metrics update."));
     }
 
     @Test
     public void reportErrorsWithProviderMismatch() {
-        GatingMatrices gm = get();
+        GatingMetrics gm = get();
 
-        MatricesProvider pa = lookupSingleton(AMatricesProvider.class);
-        MatricesProvider pb = lookupSingleton(BMatricesProvider.class);
+        MetricsProvider pa = lookupSingleton(AMetricsProvider.class);
+        MetricsProvider pb = lookupSingleton(BMetricsProvider.class);
 
-        gm.reportError(new MatricesSnapshot.Error(pa, "foo", "problem 1", null));
-        gm.reportError(new MatricesSnapshot.Error(pa, "foo", "problem 2", null));
-        gm.reportError(new MatricesSnapshot.Error(pb, "foo", "problem 3", null));
+        gm.reportError(new MetricsSnapshot.Error(pa, "foo", "problem 1", null));
+        gm.reportError(new MetricsSnapshot.Error(pa, "foo", "problem 2", null));
+        gm.reportError(new MetricsSnapshot.Error(pb, "foo", "problem 3", null));
 
         // Unknown error should be ignored
-        Map<String, MatricesSnapshot.Error> errors = gm.getErrors();
+        Map<String, MetricsSnapshot.Error> errors = gm.getErrors();
         assertEquals(ImmutableSet.of("foo"), errors.keySet());
         assertSame(pa, errors.get("foo").getProvider());
         assertEquals("problem 2", errors.get("foo").getMessage());
 
         // Unknown update should be ignored
-        gm.update(new MatricesSnapshot(pb, "foo", Collections.emptyMap()));
+        gm.update(new MetricsSnapshot(pb, "foo", Collections.emptyMap()));
 
-        assertThat(gm.getMatrices(), anEmptyMap());
+        assertThat(gm.getMetrics(), anEmptyMap());
     }
 
     @Test
     public void updateWithProviderMismatch() {
-        GatingMatrices gm = get();
+        GatingMetrics gm = get();
 
-        MatricesProvider pa = lookupSingleton(AMatricesProvider.class);
-        MatricesProvider pb = lookupSingleton(BMatricesProvider.class);
+        MetricsProvider pa = lookupSingleton(AMetricsProvider.class);
+        MetricsProvider pb = lookupSingleton(BMetricsProvider.class);
 
-        gm.update(new MatricesSnapshot(pa, "foo", Collections.emptyMap()));
-        gm.update(new MatricesSnapshot(pb, "foo", Collections.emptyMap()));
+        gm.update(new MetricsSnapshot(pa, "foo", Collections.emptyMap()));
+        gm.update(new MetricsSnapshot(pb, "foo", Collections.emptyMap()));
 
         // Unknown update should be ignored
-        Map<String, MatricesSnapshot> matrices = gm.getMatrices();
-        assertEquals(ImmutableSet.of("foo"), matrices.keySet());
-        assertSame(pa, matrices.get("foo").getProvider());
+        Map<String, MetricsSnapshot> metrics = gm.getMetrics();
+        assertEquals(ImmutableSet.of("foo"), metrics.keySet());
+        assertSame(pa, metrics.get("foo").getProvider());
 
-        gm.reportError(new MatricesSnapshot.Error(pb, "foo", "problem 1", null));
+        gm.reportError(new MetricsSnapshot.Error(pb, "foo", "problem 1", null));
         assertThat(gm.getErrors(), anEmptyMap());
     }
 
@@ -126,7 +126,7 @@ public class GatingMatricesTest {
     public void ui() throws Exception {
 
         JenkinsRule.WebClient wc = j.createWebClient();
-        GatingMatrices gm = get();
+        GatingMetrics gm = get();
         gm.update(snapshot("statuspage/pageA/resourceC", TestStatus.OK));
         gm.update(snapshot("cachet/resource1", TestStatus.DECENT));
         gm.update(snapshot(
@@ -134,13 +134,13 @@ public class GatingMatricesTest {
                 "zabbix/host2.exeample.com", TestStatus.OK
         ));
 
-        MatricesProvider cachetProvider = gm.getMatrices().get("cachet").getProvider();
-        gm.reportError(new MatricesSnapshot.Error(
+        MetricsProvider cachetProvider = gm.getMetrics().get("cachet").getProvider();
+        gm.reportError(new MetricsSnapshot.Error(
                 cachetProvider, "cachet", "Failed fetching data", new RuntimeException("Cause message")
         ));
 
-        gm.reportError(new MatricesSnapshot.Error(
-                new MatricesProvider() {
+        gm.reportError(new MetricsSnapshot.Error(
+                new MetricsProvider() {
                     @Nonnull @Override public Set<String> getLabels() {
                         return ImmutableSet.of("justerror");
                     }
@@ -160,7 +160,7 @@ public class GatingMatricesTest {
         assertThat(gating, containsString("RuntimeException: Just error"));
     }
 
-    public static class Provider implements MatricesProvider {
+    public static class Provider implements MetricsProvider {
 
         private Set<String> labels;
 

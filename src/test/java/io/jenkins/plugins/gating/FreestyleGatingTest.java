@@ -52,7 +52,7 @@ public class FreestyleGatingTest {
     public static final String RES1 = "statuspage/pageA/my-resource";
     public static final String RES2 = "statuspage/Page #3/The Resource";
     @TestExtension
-    public static final class Provider implements MatricesProvider {
+    public static final class Provider implements MetricsProvider {
         @Override
         public @Nonnull Set<String> getLabels() {
             return ImmutableSet.of("statuspage");
@@ -64,7 +64,7 @@ public class FreestyleGatingTest {
 
     @Test
     public void allDown() throws Exception {
-        MatricesSnapshot snapshot = snapshot(
+        MetricsSnapshot snapshot = snapshot(
                 RES1, TestStatus.BELLY_UP,
                 RES2, TestStatus.DECENT
         );
@@ -79,7 +79,7 @@ public class FreestyleGatingTest {
 
     @Test
     public void allUp() throws Exception {
-        MatricesSnapshot snapshot = snapshot(
+        MetricsSnapshot snapshot = snapshot(
                 RES1, TestStatus.OK,
                 RES2, TestStatus.OK
         );
@@ -90,7 +90,7 @@ public class FreestyleGatingTest {
 
     @Test
     public void someDown() throws Exception {
-        MatricesSnapshot snapshot = snapshot(
+        MetricsSnapshot snapshot = snapshot(
                 RES1, TestStatus.BELLY_UP,
                 RES2, TestStatus.OK
         );
@@ -177,7 +177,7 @@ public class FreestyleGatingTest {
         item.getFuture().get();
     }
 
-    private Queue.Item runJob(MatricesSnapshot status, JobProperty<? super FreeStyleProject> reqs) throws IOException, InterruptedException {
+    private Queue.Item runJob(MetricsSnapshot status, JobProperty<? super FreeStyleProject> reqs) throws IOException, InterruptedException {
         Utils.setStatus(status);
 
         FreeStyleProject p = j.createFreeStyleProject();

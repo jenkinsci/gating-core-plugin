@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package io.jenkins.plugins.gating.GatingMatrices
+package io.jenkins.plugins.gating.GatingMetrics
 
 import hudson.Functions
 

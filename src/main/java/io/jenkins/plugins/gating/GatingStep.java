@@ -43,7 +43,7 @@ public final class GatingStep extends Step implements Serializable {
     private static final long serialVersionUID = -4244024221933297123L;
     private static final Logger LOGGER = Logger.getLogger(GatingStep.class.getName());
 
-    // List of execution to be probed when new matrices arrives
+    // List of execution to be probed when new metrics arrives
     private static final List<Execution> blockedExecutions = new ArrayList<>();
 
     private final ResourceRequirementProperty requiredResources;
@@ -55,7 +55,7 @@ public final class GatingStep extends Step implements Serializable {
         requiredResources = new ResourceRequirementProperty(resources);
     }
 
-    /*package*/ static void matricesUpdated() {
+    /*package*/ static void metricsUpdated() {
         ArrayList<Execution> executions;
         synchronized (blockedExecutions) {
             executions = new ArrayList<>(blockedExecutions);
@@ -89,7 +89,7 @@ public final class GatingStep extends Step implements Serializable {
         @Override
         public boolean start() throws Exception {
             displayName = getContext().get(Run.class).getFullDisplayName();
-            ResourceBlockage blocked = gatingStep.requiredResources.evaluate(GatingMatrices.get());
+            ResourceBlockage blocked = gatingStep.requiredResources.evaluate(GatingMetrics.get());
             if (blocked == null) {
                 LOGGER.finer("Running " + displayName + " right away");
                 resumeToRunBody();
@@ -120,7 +120,7 @@ public final class GatingStep extends Step implements Serializable {
         }
 
         public void recheck() throws InterruptedException, IOException {
-            ResourceBlockage blocked = gatingStep.requiredResources.evaluate(GatingMatrices.get());
+            ResourceBlockage blocked = gatingStep.requiredResources.evaluate(GatingMetrics.get());
             if (blocked == null) {
                 LOGGER.info("Unblocking requireResources for " + displayName);
                 synchronized (blockedExecutions) {

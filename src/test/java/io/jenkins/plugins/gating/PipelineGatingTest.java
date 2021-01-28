@@ -22,13 +22,10 @@
 package io.jenkins.plugins.gating;
 
 import com.google.common.collect.ImmutableSet;
-import hudson.Plugin;
-import hudson.PluginWrapper;
 import hudson.model.FreeStyleProject;
 import hudson.model.Queue;
 import hudson.model.Run;
 import javaposse.jobdsl.plugin.ExecuteDslScripts;
-import org.apache.tools.ant.filters.StringInputStream;
 import org.hamcrest.Matchers;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -36,18 +33,12 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.jvnet.hudson.test.UnitTestSupportingPluginManager;
-import org.jvnet.hudson.test.recipes.WithPluginManager;
 import org.jvnet.hudson.test.recipes.WithTimeout;
 
-import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.jar.Manifest;
 
 import static io.jenkins.plugins.gating.ResourceStatus.Category.UP;
 import static java.util.Arrays.asList;
@@ -90,7 +81,7 @@ public class PipelineGatingTest {
 
     @Test
     public void blockStepWhenDown() throws Exception {
-        MatricesProvider provider = new MatricesProvider() {
+        MetricsProvider provider = new MetricsProvider() {
             @Nonnull @Override public Set<String> getLabels() {
                 return ImmutableSet.of("foo/bar/baz", "foo/red/sox");
             }

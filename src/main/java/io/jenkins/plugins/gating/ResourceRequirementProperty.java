@@ -62,12 +62,12 @@ public final class ResourceRequirementProperty extends JobProperty<Job<?, ?>> im
      * @param availability Real world state of resources
      * @return null when satisfied, reasoning otherwise
      */
-    public @CheckForNull ResourceBlockage evaluate(GatingMatrices availability) {
+    public @CheckForNull ResourceBlockage evaluate(GatingMetrics availability) {
         ArrayList<String> missing = new ArrayList<>();
 
-        Map<String, MatricesSnapshot.Resource> metrics = availability.getStatusOfAllResources();
+        Map<String, MetricsSnapshot.Resource> metrics = availability.getStatusOfAllResources();
         for (String resourceName : resources) {
-            MatricesSnapshot.Resource resource = metrics.get(resourceName);
+            MetricsSnapshot.Resource resource = metrics.get(resourceName);
             ResourceStatus status = resource == null
                     ? ResourceStatus.Category.UNKNOWN
                     : resource.getStatus()
@@ -104,7 +104,7 @@ public final class ResourceRequirementProperty extends JobProperty<Job<?, ?>> im
 
         @Override
         public boolean isApplicable(Class<? extends Job> jobType) {
-            return ExtensionList.lookup(MatricesProvider.class).size() > 0;
+            return ExtensionList.lookup(MetricsProvider.class).size() > 0;
         }
     }
 }

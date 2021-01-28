@@ -29,10 +29,10 @@ import java.util.Set;
 /**
  * Provider abstraction user are supposed to implement.
  *
- * This must be a singleton so {@link GatingMatrices#update(MatricesSnapshot)} is going to recognise duplicates.
+ * This must be a singleton so {@link GatingMetrics#update(MetricsSnapshot)} is going to recognise duplicates.
  * Ideally implemented as {@link jenkins.model.GlobalConfiguration}.
  */
-public interface MatricesProvider extends ExtensionPoint {
+public interface MetricsProvider extends ExtensionPoint {
     /**
      * Label names this provider is configured to service.
      *

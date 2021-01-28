@@ -34,15 +34,15 @@ import java.util.TreeMap;
 /**
  * Immutable snapshot of resources reported by a single provider.
  */
-public final class MatricesSnapshot {
+public final class MetricsSnapshot {
     private final long created = System.currentTimeMillis();
 
     private final @Nonnull Map<String, Resource> statuses;
-    private final @Nonnull MatricesProvider provider;
+    private final @Nonnull MetricsProvider provider;
     private final @Nonnull String sourceLabel;
 
-    public MatricesSnapshot(
-            @Nonnull MatricesProvider provider,
+    public MetricsSnapshot(
+            @Nonnull MetricsProvider provider,
             @Nonnull String sourceLabel,
             @Nonnull Map<String, Resource> statuses
     ) {
@@ -59,9 +59,9 @@ public final class MatricesSnapshot {
         }
 
         statuses.forEach((k ,v)-> {
-            if (!k.startsWith(sourceLabel + GatingMatrices.DELIM)) {
+            if (!k.startsWith(sourceLabel + GatingMetrics.DELIM)) {
                 throw new IllegalArgumentException(String.format(
-                        "Resource name (%s) not prefixed with source label (%s%s)", k, sourceLabel, GatingMatrices.DELIM
+                        "Resource name (%s) not prefixed with source label (%s%s)", k, sourceLabel, GatingMetrics.DELIM
                 ));
             }
             if (!Objects.equals(k, v.name)) {
@@ -71,7 +71,7 @@ public final class MatricesSnapshot {
             }
         });
 
-        TreeMap<String, Resource> out = new TreeMap<>(GatingMatrices.RESOURCE_ID_COMPARATOR);
+        TreeMap<String, Resource> out = new TreeMap<>(GatingMetrics.RESOURCE_ID_COMPARATOR);
         out.putAll(statuses);
         this.statuses = Collections.unmodifiableMap(out);
     }
@@ -84,7 +84,7 @@ public final class MatricesSnapshot {
         return statuses;
     }
 
-    public @Nonnull MatricesProvider getProvider() {
+    public @Nonnull MetricsProvider getProvider() {
         return provider;
     }
 
@@ -144,10 +144,10 @@ public final class MatricesSnapshot {
         private static final long serialVersionUID = 935938103227549507L;
 
         private final long created = System.currentTimeMillis();
-        private final @Nonnull MatricesProvider provider;
+        private final @Nonnull MetricsProvider provider;
         private final @Nonnull String sourceLabel;
 
-        public Error(@Nonnull MatricesProvider provider, @Nonnull String sourceLabel, @Nonnull String message, @CheckForNull Throwable cause) {
+        public Error(@Nonnull MetricsProvider provider, @Nonnull String sourceLabel, @Nonnull String message, @CheckForNull Throwable cause) {
             super(message, cause);
             this.provider = provider;
             this.sourceLabel = sourceLabel;
@@ -157,7 +157,7 @@ public final class MatricesSnapshot {
             return new Date(created);
         }
 
-        public @Nonnull MatricesProvider getProvider() {
+        public @Nonnull MetricsProvider getProvider() {
             return provider;
         }
 

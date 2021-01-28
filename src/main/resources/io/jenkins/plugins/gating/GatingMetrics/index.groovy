@@ -19,32 +19,32 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package io.jenkins.plugins.gating.GatingMatrices
+package io.jenkins.plugins.gating.Gatingmetrics
 
-import hudson.Functions
+
 import hudson.model.Job
-import io.jenkins.plugins.gating.GatingMatrices
+import io.jenkins.plugins.gating.GatingMetrics
 
 def l = namespace(lib.LayoutTagLib)
 st = namespace("jelly:stapler")
 
-GatingMatrices gating = (GatingMatrices) my
+GatingMetrics gating = (GatingMetrics) my
 
 style("""
-        #matrices th {
+        #metrics th {
             text-align: left;
         }
 
-        #matrices td.UP {
+        #metrics td.UP {
             background-color: #3fdf3f;
         }
-        #matrices td.DEGRADED {
+        #metrics td.DEGRADED {
         background-color: #ffd485;
         }
-        #matrices td.UNKNOWN {
+        #metrics td.UNKNOWN {
             background-color: #ccc;
         }
-        #matrices td.DOWN {
+        #metrics td.DOWN {
             background-color: #ff7171;
         }
 
@@ -65,21 +65,21 @@ l.layout(permission: Job.CONFIGURE) {
             }
         }
 
-        def matrices = gating.matrices
-        if (matrices.isEmpty()) {
-            p(strong("No matrices available. Either no sources were configured, or the data have not been received yet."))
+        def metrics = gating.metrics
+        if (metrics.isEmpty()) {
+            p(strong("No metrics available. Either no sources were configured, or the data have not been received yet."))
         }
 
         def errors = gating.errors
         def errorsWithoutData = new HashMap<>(errors)
-        errorsWithoutData.keySet().removeAll(matrices.keySet())
+        errorsWithoutData.keySet().removeAll(metrics.keySet())
 
         errorsWithoutData.each { sourceLabel, error ->
             h2(sourceLabel)
             st.include(class: gating.class, page: "error.groovy", it: error)
         }
 
-        matrices.each { sourceLabel, snapshot ->
+        metrics.each { sourceLabel, snapshot ->
             h2(sourceLabel)
             def error = errors.get(sourceLabel)
             if (error) {
@@ -88,7 +88,7 @@ l.layout(permission: Job.CONFIGURE) {
             }
 
             small(snapshot.created)
-            table(class: "pane sortable bigtable", width: "100%", id: "matrices") {
+            table(class: "pane sortable bigtable", width: "100%", id: "metrics") {
                 tr {
                     th { text("Resource") }
                     th { text("Status") }

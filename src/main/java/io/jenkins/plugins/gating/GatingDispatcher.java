@@ -36,7 +36,7 @@ import javax.inject.Inject;
 @Restricted(NoExternalUse.class)
 public final class GatingDispatcher extends QueueTaskDispatcher {
 
-    @Inject private GatingMatrices matrices;
+    @Inject private GatingMetrics metrics;
 
     @Override
     public @CheckForNull CauseOfBlockage canRun(Queue.Item item) {
@@ -46,7 +46,7 @@ public final class GatingDispatcher extends QueueTaskDispatcher {
 
             if (property == null) return null; // No Requirements, free to run
 
-            return property.evaluate(matrices);
+            return property.evaluate(metrics);
         }
         return null;
     }
