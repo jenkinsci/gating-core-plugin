@@ -42,7 +42,6 @@ import static io.jenkins.plugins.gating.ResourceStatus.Category.UP;
 import static io.jenkins.plugins.gating.Utils.snapshot;
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
