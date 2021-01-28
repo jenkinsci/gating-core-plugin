@@ -21,11 +21,13 @@
  */
 package io.jenkins.plugins.gating.GatingMatrices
 
+import hudson.Functions
 import hudson.model.Job
 import io.jenkins.plugins.gating.GatingMatrices
-import io.jenkins.plugins.gating.MatricesSnapshot
 
 def l = namespace(lib.LayoutTagLib)
+st = namespace("jelly:stapler")
+
 GatingMatrices gating = (GatingMatrices) my
 
 style("""
@@ -45,6 +47,10 @@ style("""
         #matrices td.DOWN {
             background-color: #ff7171;
         }
+
+        h2 {
+            padding-top: 2em;
+        }
 """)
 
 l.layout(permission: Job.CONFIGURE) {
@@ -60,25 +66,40 @@ l.layout(permission: Job.CONFIGURE) {
         def matrices = gating.matrices
         if (matrices.isEmpty()) {
             p(strong("No matrices available. Either no sources were configured, or the data have not been received yet."))
-        } else {
-            matrices.each { sourceName, snapshot ->
-                h2(sourceName)
-                small(snapshot.created)
-                table(class: "pane sortable bigtable", width: "100%", id: "matrices") {
+        }
+
+        def errors = gating.errors
+        def errorsWithoutData = new HashMap<>(errors)
+        errorsWithoutData.keySet().removeAll(matrices.keySet())
+
+        errorsWithoutData.each { sourceLabel, error ->
+            h2(sourceLabel)
+            st.include(class: gating.class, page: "error.groovy", it: error)
+        }
+
+        matrices.each { sourceLabel, snapshot ->
+            h2(sourceLabel)
+            def error = errors.get(sourceLabel)
+            if (error) {
+                st.include(class: gating.class, page: "error.groovy", it: error)
+                errors.remove(sourceLabel)
+            }
+
+            small(snapshot.created)
+            table(class: "pane sortable bigtable", width: "100%", id: "matrices") {
+                tr {
+                    th { text("Resource") }
+                    th { text("Status") }
+                }
+                snapshot.statuses.each { resourceName, resource ->
+                    def status = resource.status
                     tr {
-                        th { text("Resource") }
-                        th { text("Status") }
-                    }
-                    snapshot.statuses.each { resourceName, resource ->
-                        def status = resource.status
-                        tr {
-                            td { text(resourceName) }
-                            td(class: status.getCategory().name()) {
-                                strong(text(status))
-                                def category = status.getCategory()
-                                if (category != status) {
-                                    small(" ($category)")
-                                }
+                        td { text(resourceName) }
+                        td(class: status.getCategory().name()) {
+                            strong(text(status))
+                            def category = status.getCategory()
+                            if (category != status) {
+                                small(" ($category)")
                             }
                         }
                     }

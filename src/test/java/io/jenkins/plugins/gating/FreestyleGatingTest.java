@@ -164,12 +164,30 @@ public class FreestyleGatingTest {
                 "zabbix/host2.exeample.com", TestStatus.OK
         ));
 
+        MatricesProvider cachetProvider = gm.getMatrices().get("cachet").getProvider();
+        gm.reportError(new MatricesSnapshot.Error(
+                cachetProvider, "cachet", "Failed fetching data", new RuntimeException("Cause message")
+        ));
+
+        gm.reportError(new MatricesSnapshot.Error(
+                new MatricesProvider() {
+                    @Nonnull @Override public Set<String> getLabels() {
+                        return ImmutableSet.of("justerror");
+                    }
+                }, "justerror", "No data; just error", new RuntimeException("Just error")
+        ));
+
         String gating = wc.goTo("gating").getBody().getTextContent();
 
         assertThat(gating, containsString("zabbix/host1.exeample.comBELLY_UP"));
         assertThat(gating, containsString("zabbix/host2.exeample.comOK"));
         assertThat(gating, containsString("statuspage/pageA/resourceCOK"));
         assertThat(gating, containsString("cachet/resource1DECENT"));
+
+        assertThat(gating, containsString("cachetFailed fetching data"));
+        assertThat(gating, containsString("RuntimeException: Cause message"));
+        assertThat(gating, containsString("No data; just error"));
+        assertThat(gating, containsString("RuntimeException: Just error"));
     }
 
     @Test

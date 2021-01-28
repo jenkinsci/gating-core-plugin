@@ -55,7 +55,7 @@ public final class GatingMatrices implements RootAction {
      * Updates are only performed by adding/replacing/removing of values per given key.
      */
     @GuardedBy("matricesLock")
-    private @Nonnull final Map<String, MatricesSnapshot> matricesMap = new HashMap<>();
+    private final @Nonnull Map<String, MatricesSnapshot> matricesMap = new HashMap<>();
 
     /**
      * Map of all resources.
@@ -64,6 +64,14 @@ public final class GatingMatrices implements RootAction {
      */
     @GuardedBy("matricesLock")
     private @CheckForNull Map<String, MatricesSnapshot.Resource> resourceMap = null;
+
+    /**
+     * Map of errors updating data.
+     *
+     * Errors does not remove latest reported matrices, but reported data should remove the latest error.
+     */
+    @GuardedBy("matricesLock")
+    private final @Nonnull Map<String, MatricesSnapshot.Error> errorMap = new HashMap<>();
 
     public static @Nonnull GatingMatrices get() {
         return ExtensionList.lookupSingleton(GatingMatrices.class);
@@ -87,6 +95,14 @@ public final class GatingMatrices implements RootAction {
     public @Nonnull Map<String, MatricesSnapshot> getMatrices() {
         synchronized (matricesLock) {
             return new HashMap<>(matricesMap);
+        }
+    }
+
+    public @Nonnull Map<String, MatricesSnapshot.Error> getErrors() {
+        synchronized (matricesLock) {
+            if (errorMap.isEmpty()) return Collections.emptyMap();
+
+            return new HashMap<>(errorMap);
         }
     }
 
@@ -126,7 +142,6 @@ public final class GatingMatrices implements RootAction {
         return conflictMessages;
     }
 
-    // TODO report failure
     public void update(@Nonnull MatricesSnapshot snapshot) {
         String sourceLabel = snapshot.getSourceLabel();
         LOGGER.fine("Received matrices update for source " + sourceLabel);
@@ -139,11 +154,28 @@ public final class GatingMatrices implements RootAction {
                 return;
             }
             matricesMap.put(sourceLabel, snapshot);
-            resourceMap = null; // Invalidate
+            errorMap.remove(sourceLabel); // Erase previous error
+            resourceMap = null; // Invalidate cache
         }
 
         // TODO Only when something changed
         GatingStep.matricesUpdated();
+    }
+
+    public void reportError(MatricesSnapshot.Error error) {
+        String sourceLabel = error.getSourceLabel();
+        LOGGER.info("Received error for source " + sourceLabel);
+
+        synchronized (matricesLock) {
+            MatricesSnapshot oldData = matricesMap.get(sourceLabel);
+            if (oldData != null && oldData.getProvider() != error.getProvider()) {
+                // Source label conflict - ignore all but first
+                LOGGER.severe(getFormat(error.getProvider(), oldData.getProvider(), sourceLabel));
+                return;
+            }
+            // Track error. Do not remove latest known data, nor the cache.
+            errorMap.put(sourceLabel, error);
+        }
     }
 
     private String getFormat(MatricesProvider lhs, MatricesProvider rhs, String sourceLabel) {

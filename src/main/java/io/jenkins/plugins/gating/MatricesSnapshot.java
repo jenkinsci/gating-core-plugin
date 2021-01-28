@@ -139,4 +139,30 @@ public final class MatricesSnapshot {
             return String.format("Resource{name='%s', status=%s, description='%s'}", name, status, description);
         }
     }
+
+    public static final class Error extends RuntimeException {
+        private static final long serialVersionUID = 935938103227549507L;
+
+        private final long created = System.currentTimeMillis();
+        private final @Nonnull MatricesProvider provider;
+        private final @Nonnull String sourceLabel;
+
+        public Error(@Nonnull MatricesProvider provider, @Nonnull String sourceLabel, @Nonnull String message, @CheckForNull Throwable cause) {
+            super(message, cause);
+            this.provider = provider;
+            this.sourceLabel = sourceLabel;
+        }
+
+        public @Nonnull Date getCreated() {
+            return new Date(created);
+        }
+
+        public @Nonnull MatricesProvider getProvider() {
+            return provider;
+        }
+
+        public @Nonnull String getSourceLabel() {
+            return sourceLabel;
+        }
+    }
 }
