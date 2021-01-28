@@ -22,12 +22,26 @@ plugins to do so.
 Install this plugin and necessary backend plugins to read the uptime information from the sources you use to track
 infrastructure uptime. Once such plugin(s) are configured and provides data into Jenkins, builds can utilize the data.
 
-See what matrices are available to Jenkins at JENKINS_URL/gating/. 
+See what matrices are available to Jenkins Gating at JENKINS_URL/gating/. 
 
 ### Holding builds in queue
 
 Add "Gating requirement" property for your jobs and select which of the resources needs to be up in order for the build
-to be scheduled.
+to be scheduled. Then everytime the build gets scheduled, it will only leave the queue when all the resources are up.
+
+### Configuring via Job DSL
+
+```groovy
+job('my-job') {
+  properties {
+    requireResources {
+      resources(['my-service', 'my-other-service'])
+    }
+    // ...
+  }
+  // ...
+}
+```
 
 ### Pausing pipeline execution
 
@@ -44,4 +58,3 @@ requireResources(resources: ['my-service', 'my-other-service']) {
 ## LICENSE
 
 Licensed under MIT, see [LICENSE](LICENSE.md)
-
