@@ -22,7 +22,7 @@ plugins to do so.
 Install this plugin and necessary backend plugins to read the status information from the sources that you use to track
 infrastructure health. Once such plugin(s) are configured and start to provide the data to Jenkins Gating, builds can utilize the data.
 
-See what matrices are available to Jenkins Gating at JENKINS_URL/gating/. 
+See what metrics are available to Jenkins Gating at JENKINS_URL/gating/. 
 
 ### Holding builds in queue
 
