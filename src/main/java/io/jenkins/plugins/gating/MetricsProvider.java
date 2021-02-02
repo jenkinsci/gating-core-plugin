@@ -34,9 +34,9 @@ import java.util.Set;
  */
 public interface MetricsProvider extends ExtensionPoint {
     /**
-     * Label names this provider is configured to service.
+     * Source label names this provider is configured to service.
      *
-     * Individual providers must provide labels that are unique within Jenkins.
+     * Individual providers must provide labels that are unique within Jenkins. Labels must ne non-empty alphanumeric strings.
      */
     @Nonnull Set<String> getLabels();
 }

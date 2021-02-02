@@ -24,6 +24,7 @@ package io.jenkins.plugins.gating;
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.model.RootAction;
+import hudson.util.FormValidation;
 import org.jenkinsci.Symbol;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -38,11 +39,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 @Extension
 public final class GatingMetrics implements RootAction {
     private static final Logger LOGGER = Logger.getLogger(GatingMetrics.class.getName());
+    private static final String REGEX = "^[a-zA-Z0-9_-]+$";
+    private static final Predicate<String> SOURCE_LABEL_PREDICATE = Pattern.compile(REGEX).asPredicate();
 
     public static final @Nonnull String DELIM = "/";
     public static final Comparator<String> RESOURCE_ID_COMPARATOR = String::compareToIgnoreCase;
@@ -134,9 +139,14 @@ public final class GatingMetrics implements RootAction {
         Map<String, MetricsProvider> labelToProvider = new HashMap<>();
         for (MetricsProvider provider : ExtensionList.lookup(MetricsProvider.class)) {
             for (String label : provider.getLabels()) {
+                FormValidation validation = validateLabel(label);
+                if (validation.kind != FormValidation.Kind.OK) {
+                    conflictMessages.add(validation.getMessage());
+                }
+
                 MetricsProvider existingProvider = labelToProvider.get(label);
                 if (existingProvider != null) {
-                    conflictMessages.add(getFormat(provider, existingProvider, label));
+                    conflictMessages.add(labelConflictError(provider, existingProvider, label));
                 } else {
                     labelToProvider.put(label, provider);
                 }
@@ -178,20 +188,20 @@ public final class GatingMetrics implements RootAction {
         MetricsSnapshot oldData = metricsMap.get(sourceLabel);
         if (oldData != null && oldData.getProvider() != incomingProvider) {
             // Source label conflict - ignore all but first
-            LOGGER.severe(getFormat(incomingProvider, oldData.getProvider(), sourceLabel));
+            LOGGER.severe(labelConflictError(incomingProvider, oldData.getProvider(), sourceLabel));
             return false;
         }
         MetricsSnapshot.Error oldError = errorMap.get(sourceLabel);
         if (oldError != null && oldError.getProvider() != incomingProvider) {
             // Source label conflict - ignore all but first
-            LOGGER.severe(getFormat(incomingProvider, oldError.getProvider(), sourceLabel));
+            LOGGER.severe(labelConflictError(incomingProvider, oldError.getProvider(), sourceLabel));
             return false;
         }
 
         return true;
     }
 
-    private String getFormat(MetricsProvider lhs, MetricsProvider rhs, String sourceLabel) {
+    private String labelConflictError(MetricsProvider lhs, MetricsProvider rhs, String sourceLabel) {
         return String.format(
                 "Providers %s and %s have a colliding sourceLabel %s. Ignoring metrics update.",
                 getProviderDescription(lhs),
@@ -203,5 +213,12 @@ public final class GatingMetrics implements RootAction {
     private String getProviderDescription(MetricsProvider p) {
         Symbol s = p.getClass().getAnnotation(Symbol.class);
         return s == null ? p.toString() : s.value()[0];
+    }
+
+    public static FormValidation validateLabel(@CheckForNull String label) {
+        boolean valid = label != null && SOURCE_LABEL_PREDICATE.test(label);
+        if (valid) return FormValidation.ok();
+
+        return FormValidation.error("Invalid source label name: " + label + ". Must match /" + REGEX + "/.");
     }
 }

@@ -22,10 +22,12 @@
 package io.jenkins.plugins.gating;
 
 import com.google.common.collect.ImmutableSet;
+import hudson.util.FormValidation;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
+import org.jvnet.hudson.test.WithoutJenkins;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
@@ -40,6 +42,7 @@ import static io.jenkins.plugins.gating.Utils.snapshot;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anEmptyMap;
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 
@@ -50,6 +53,17 @@ public class GatingMetricsTest {
     @TestExtension public static class AMetricsProvider extends Provider { public AMetricsProvider() { super("a"); } }
     @TestExtension public static class BMetricsProvider extends Provider { public BMetricsProvider() { super("b", "bb"); } }
     @TestExtension public static class XMetricsProvider extends Provider { public XMetricsProvider() { super("x", "bb"); } }
+
+    @Test @WithoutJenkins
+    public void validateLabel() {
+        assertEquals(FormValidation.Kind.ERROR, GatingMetrics.validateLabel(null).kind);
+        assertEquals(FormValidation.Kind.ERROR, GatingMetrics.validateLabel("").kind);
+        assertEquals(FormValidation.Kind.ERROR, GatingMetrics.validateLabel("\t").kind);
+        assertEquals(FormValidation.Kind.ERROR, GatingMetrics.validateLabel("/").kind);
+        assertEquals(FormValidation.Kind.ERROR, GatingMetrics.validateLabel("AC/DC").kind);
+
+        assertEquals(FormValidation.Kind.OK, GatingMetrics.validateLabel("Foo").kind);
+    }
 
     @Test
     public void updateWithOverlappingSourceLabels() throws Exception {

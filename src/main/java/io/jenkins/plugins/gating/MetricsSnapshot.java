@@ -22,6 +22,7 @@
 package io.jenkins.plugins.gating;
 
 import hudson.Util;
+import hudson.util.FormValidation;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
@@ -30,6 +31,8 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+
+import static hudson.util.FormValidation.Kind.OK;
 
 /**
  * Immutable snapshot of resources reported by a single provider.
@@ -46,7 +49,9 @@ public final class MetricsSnapshot {
             @Nonnull String sourceLabel,
             @Nonnull Map<String, Resource> statuses
     ) {
-        if (sourceLabel == null || sourceLabel.isEmpty()) throw new IllegalArgumentException("Empty source label");
+        FormValidation validation = GatingMetrics.validateLabel(sourceLabel);
+        if (validation.kind != OK) throw new IllegalArgumentException(validation);
+
         this.provider = provider;
         this.sourceLabel = sourceLabel;
 
@@ -149,6 +154,10 @@ public final class MetricsSnapshot {
 
         public Error(@Nonnull MetricsProvider provider, @Nonnull String sourceLabel, @Nonnull String message, @CheckForNull Throwable cause) {
             super(message, cause);
+
+            FormValidation validation = GatingMetrics.validateLabel(sourceLabel);
+            if (validation.kind != OK) throw new IllegalArgumentException(validation);
+
             this.provider = provider;
             this.sourceLabel = sourceLabel;
         }
