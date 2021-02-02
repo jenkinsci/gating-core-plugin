@@ -14,15 +14,15 @@ The plugin provides reusable components for Jenkins builds to either wait in que
 Jenkins pipeline when the infrastructure is unavailable. Backend plugins are responsible for submitting
 the update data, so they can be consumed through this plugin.
 
-Note that this plugin alone does not monitor any resources, nor it pulls resource status from anywhere. It relies on those source
+Note that this plugin alone does not monitor any resources, nor it pulls resource status from anywhere. It relies on those backend
 plugins to do so.
 
 ## Getting started
 
-Install this plugin and necessary backend plugins to read the uptime information from the sources you use to track
-infrastructure uptime. Once such plugin(s) are configured and provides data into Jenkins, builds can utilize the data.
+Install this plugin and necessary backend plugins to read the status information from the sources that you use to track
+infrastructure health. Once such plugin(s) are configured and start to provide the data to Jenkins Gating, builds can utilize the data.
 
-See what matrices are available to Jenkins Gating at JENKINS_URL/gating/. 
+See what metrics are available to Jenkins Gating at JENKINS_URL/gating/. 
 
 ### Holding builds in queue
 
@@ -45,7 +45,7 @@ job('my-job') {
 
 ### Pausing pipeline execution
 
-Alternatively, part of the build can gate certain resources using a pipeline block-step:
+Alternatively, part of the build can require certain resources using a pipeline block-step:
 
 ```groovy
 // ... pipeline code ...
@@ -54,6 +54,8 @@ requireResources(resources: ['my-service', 'my-other-service']) {
 }
 // ... more pipeline code ...
 ``` 
+
+The body of the block will not be executed until the the resources are available.
 
 ## LICENSE
 
