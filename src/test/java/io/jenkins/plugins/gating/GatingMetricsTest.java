@@ -167,6 +167,7 @@ public class GatingMetricsTest {
         assertThat(gating, containsString("zabbix/host2.exeample.comOK"));
         assertThat(gating, containsString("statuspage/pageA/resourceCOK"));
         assertThat(gating, containsString("cachet/resource1DECENT"));
+        assertThat(gating, containsString("Description of zabbix/host2.exeample.com"));
 
         assertThat(gating, containsString("cachetFailed fetching data"));
         assertThat(gating, containsString("RuntimeException: Cause message"));

@@ -40,23 +40,24 @@ public class Utils {
 
     public static MetricsSnapshot snapshot(String name, ResourceStatus rs) {
         HashMap<String, MetricsSnapshot.Resource> hm = new HashMap<>();
-        hm.put(name, new MetricsSnapshot.Resource(name, rs));
+        hm.put(name, resource(name, rs));
         return snapshot(hm);
     }
 
     public static MetricsSnapshot snapshot(String name0, ResourceStatus rs0, String name1, ResourceStatus rs1) {
         HashMap<String, MetricsSnapshot.Resource> hm = new HashMap<>();
-        hm.put(name0, new MetricsSnapshot.Resource(name0, rs0));
-        hm.put(name1, new MetricsSnapshot.Resource(name1, rs1));
+        hm.put(name0, resource(name0, rs0));
+        hm.put(name1, resource(name1, rs1));
         return snapshot(hm);
     }
 
     public static MetricsSnapshot snapshot(MetricsProvider provider, String name0, ResourceStatus rs0, String name1, ResourceStatus rs1) {
         HashMap<String, MetricsSnapshot.Resource> hm = new HashMap<>();
-        hm.put(name0, new MetricsSnapshot.Resource(name0, rs0));
-        hm.put(name1, new MetricsSnapshot.Resource(name1, rs1));
+        hm.put(name0, resource(name0, rs0));
+        hm.put(name1, resource(name1, rs1));
         return snapshot(provider, hm);
     }
+
 
     public static MetricsSnapshot snapshot(Map<String, MetricsSnapshot.Resource> resources) {
         String name = resources.keySet().iterator().next();
@@ -71,7 +72,7 @@ public class Utils {
 
     public static MetricsSnapshot snapshot(MetricsProvider provider, String name, ResourceStatus rs) {
         HashMap<String, MetricsSnapshot.Resource> hm = new HashMap<>();
-        hm.put(name, new MetricsSnapshot.Resource(name, rs));
+        hm.put(name, resource(name, rs));
         return snapshot(provider, hm);
     }
 
@@ -79,5 +80,9 @@ public class Utils {
         String name = resources.keySet().iterator().next();
         String sourceLabel = name.replaceAll("/.*", "");
         return new MetricsSnapshot(provider, sourceLabel, resources);
+    }
+
+    private static @Nonnull MetricsSnapshot.Resource resource(String name, ResourceStatus status) {
+        return new MetricsSnapshot.Resource(name, status, "Description of " + name);
     }
 }

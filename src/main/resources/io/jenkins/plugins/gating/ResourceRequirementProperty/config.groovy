@@ -23,6 +23,7 @@
 package io.jenkins.plugins.gating.ResourceRequirementProperty
 
 import io.jenkins.plugins.gating.GatingMetrics
+import io.jenkins.plugins.gating.MetricsSnapshot
 import io.jenkins.plugins.gating.ResourceRequirementProperty
 
 def f = namespace(lib.FormTagLib)
@@ -31,14 +32,16 @@ ResourceRequirementProperty rrp = (ResourceRequirementProperty) instance
 f.optionalBlock(field: "declares_resources", inline: true, checked: rrp != null, title: "Resource gating") {
     def declaredResources = rrp == null ? [] : rrp.resources
     f.entry(field: "resources", title: "Required resources") {
-        def reportedResources = GatingMetrics.get().statusOfAllResources.keySet()
+        resources = GatingMetrics.get().statusOfAllResources
+        def reportedResources = resources.keySet()
 
         // Some or all metrics can be temporarily absent. Insert all configured values to make sure we do not drop
         // those not backed by reported resources on submit.
         def offeredResources = reportedResources + declaredResources
         select(name: "resources", multiple: "multiple", size: Math.min(10, offeredResources.size())) {
             offeredResources.each { resource ->
-                f.option(value: resource, selected: declaredResources.contains(resource)) {
+                boolean selected = declaredResources.contains(resource)
+                option(value: resource, selected: selected ? "selected" : null, title: resources.get(resource)?.description) {
                     text(resource)
                 }
             }

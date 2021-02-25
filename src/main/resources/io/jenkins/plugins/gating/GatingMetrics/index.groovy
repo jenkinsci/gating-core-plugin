@@ -35,6 +35,11 @@ style("""
             text-align: left;
         }
 
+        #metrics td.resource-name {
+            font-family: monospace;
+            font-weight: bold;
+        }
+
         #metrics td.UP {
             background-color: #3fdf3f;
         }
@@ -92,11 +97,12 @@ l.layout(permission: Job.CONFIGURE) {
                 tr {
                     th { text("Resource") }
                     th { text("Status") }
+                    th { text("Description") }
                 }
                 snapshot.statuses.each { resourceName, resource ->
                     def status = resource.status
                     tr {
-                        td { text(resourceName) }
+                        td(class: "resource-name") { text(resourceName) }
                         td(class: status.getCategory().name()) {
                             strong(text(status))
                             def category = status.getCategory()
@@ -104,6 +110,7 @@ l.layout(permission: Job.CONFIGURE) {
                                 small(" ($category)")
                             }
                         }
+                        td { text(resource.description) }
                     }
                 }
             }
