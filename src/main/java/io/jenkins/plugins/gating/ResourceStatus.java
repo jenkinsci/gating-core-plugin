@@ -22,7 +22,6 @@
 package io.jenkins.plugins.gating;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
 
 /**
  * Immutable status of monitored resource.

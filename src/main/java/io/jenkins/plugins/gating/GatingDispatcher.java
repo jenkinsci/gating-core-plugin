@@ -40,8 +40,7 @@ public final class GatingDispatcher extends QueueTaskDispatcher {
 
     @Override
     public @CheckForNull CauseOfBlockage canRun(Queue.Item item) {
-        if (item.task instanceof Job) {
-            Job<?, ?> job = (Job<?, ?>) item.task;
+        if (item.task instanceof Job<?, ?> job) {
             ResourceRequirementProperty property = job.getProperty(ResourceRequirementProperty.class);
 
             if (property == null) return null; // No Requirements, free to run

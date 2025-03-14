@@ -29,10 +29,11 @@ import hudson.model.JobPropertyDescriptor;
 import net.sf.json.JSONObject;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,6 +45,7 @@ import java.util.Map;
  */
 public final class ResourceRequirementProperty extends JobProperty<Job<?, ?>> implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = -4060336631507729998L;
     private final @Nonnull List<String> resources;
 
@@ -93,7 +95,7 @@ public final class ResourceRequirementProperty extends JobProperty<Job<?, ?>> im
         }
 
         @Override
-        public JobProperty<?> newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+        public JobProperty<?> newInstance(StaplerRequest2 req, JSONObject formData) throws FormException {
             // Do not create the property in case it is not activated
             if (formData.getBoolean("declares_resources")) {
                 return super.newInstance(req, formData);

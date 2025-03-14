@@ -21,7 +21,6 @@
  */
 package io.jenkins.plugins.gating;
 
-import com.google.common.collect.ImmutableMap;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Rule;

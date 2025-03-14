@@ -33,6 +33,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +41,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 public final class GatingStep extends Step implements Serializable {
+    @Serial
     private static final long serialVersionUID = -4244024221933297123L;
     private static final Logger LOGGER = Logger.getLogger(GatingStep.class.getName());
 
@@ -76,6 +78,7 @@ public final class GatingStep extends Step implements Serializable {
     }
 
     private static final class Execution extends StepExecution {
+        @Serial
         private static final long serialVersionUID = -8240169797779406466L;
 
         private final GatingStep gatingStep;
