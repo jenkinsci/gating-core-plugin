@@ -26,6 +26,7 @@ import hudson.util.FormValidation;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import java.io.Serial;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
@@ -146,6 +147,7 @@ public final class MetricsSnapshot {
     }
 
     public static final class Error extends RuntimeException {
+        @Serial
         private static final long serialVersionUID = 935938103227549507L;
 
         private final long created = System.currentTimeMillis();
