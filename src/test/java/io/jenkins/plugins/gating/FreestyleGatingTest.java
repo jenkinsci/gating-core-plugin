@@ -27,10 +27,10 @@ import hudson.model.JobProperty;
 import hudson.model.Queue;
 import hudson.model.queue.CauseOfBlockage;
 import javaposse.jobdsl.plugin.ExecuteDslScripts;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -43,14 +43,14 @@ import static io.jenkins.plugins.gating.Utils.snapshot;
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class FreestyleGatingTest {
+@WithJenkins
+class FreestyleGatingTest {
 
     public static final String RES1 = "statuspage/pageA/my-resource";
     public static final String RES2 = "statuspage/Page #3/The Resource";
+
     @TestExtension
     public static final class Provider implements MetricsProvider {
         @Override
@@ -59,17 +59,14 @@ public class FreestyleGatingTest {
         }
     }
 
-    @Rule
-    public final JenkinsRule j = new JenkinsRule();
-
     @Test
-    public void allDown() throws Exception {
+    void allDown(JenkinsRule j) throws Exception {
         MetricsSnapshot snapshot = snapshot(
                 RES1, TestStatus.BELLY_UP,
                 RES2, TestStatus.DECENT
         );
 
-        Queue.Item item = runJob(snapshot, new ResourceRequirementProperty(asList(RES1, RES2)));
+        Queue.Item item = runJob(j, snapshot, new ResourceRequirementProperty(asList(RES1, RES2)));
         CauseOfBlockage cob = item.getCauseOfBlockage();
         assertEquals(
                 String.format("Some resources are not available: %s is BELLY_UP, %s is DECENT", RES1, RES2),
@@ -78,24 +75,24 @@ public class FreestyleGatingTest {
     }
 
     @Test
-    public void allUp() throws Exception {
+    void allUp(JenkinsRule j) throws Exception {
         MetricsSnapshot snapshot = snapshot(
                 RES1, TestStatus.OK,
                 RES2, TestStatus.OK
         );
 
-        runJob(snapshot, new ResourceRequirementProperty(Collections.singletonList(RES2)));
+        runJob(j, snapshot, new ResourceRequirementProperty(Collections.singletonList(RES2)));
         assertTrue(j.getInstance().getQueue().isEmpty());
     }
 
     @Test
-    public void someDown() throws Exception {
+    void someDown(JenkinsRule j) throws Exception {
         MetricsSnapshot snapshot = snapshot(
                 RES1, TestStatus.BELLY_UP,
                 RES2, TestStatus.OK
         );
 
-        Queue.Item item = runJob(snapshot, new ResourceRequirementProperty(asList(RES1, RES2)));
+        Queue.Item item = runJob(j, snapshot, new ResourceRequirementProperty(asList(RES1, RES2)));
         CauseOfBlockage cob = item.getCauseOfBlockage();
         assertEquals(
                 String.format("Some resources are not available: %s is BELLY_UP", RES1),
@@ -104,7 +101,7 @@ public class FreestyleGatingTest {
     }
 
     @Test
-    public void configRoundtrip() throws Exception {
+    void configRoundtrip(JenkinsRule j) throws Exception {
         FreeStyleProject p = j.createFreeStyleProject();
         List<String> expected;
 
@@ -151,7 +148,7 @@ public class FreestyleGatingTest {
     }
 
     @Test
-    public void jobDslFreestyle() throws Exception {
+    void jobDslFreestyle(JenkinsRule j) throws Exception {
         FreeStyleProject seed = j.createFreeStyleProject();
         ExecuteDslScripts jobdsl = new ExecuteDslScripts();
         jobdsl.setScriptText("job('foo') { properties { requireResources { resources(['foo/bar/baz', 'foo/red/sox']) } } }");
@@ -177,7 +174,7 @@ public class FreestyleGatingTest {
         item.getFuture().get();
     }
 
-    private Queue.Item runJob(MetricsSnapshot status, JobProperty<? super FreeStyleProject> reqs) throws IOException, InterruptedException {
+    private static Queue.Item runJob(JenkinsRule j, MetricsSnapshot status, JobProperty<? super FreeStyleProject> reqs) throws IOException, InterruptedException {
         Utils.setStatus(status);
 
         FreeStyleProject p = j.createFreeStyleProject();

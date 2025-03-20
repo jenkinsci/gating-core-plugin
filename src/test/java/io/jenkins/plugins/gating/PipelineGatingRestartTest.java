@@ -23,46 +23,44 @@ package io.jenkins.plugins.gating;
 
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.junit.Rule;
-import org.junit.Test;
-import org.jvnet.hudson.test.RestartableJenkinsRule;
+import org.junit.jupiter.api.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class PipelineGatingRestartTest {
-
-    @Rule public final RestartableJenkinsRule j = new RestartableJenkinsRule();
+@WithJenkins
+class PipelineGatingRestartTest {
 
     @Test
-    public void restartBlocked() {
+    void restartBlocked(JenkinsRule j) throws Throwable {
         PipelineGatingTest.Runner[] r = new PipelineGatingTest.Runner[1];
-        j.then(j -> {
-            WorkflowJob w = j.jenkins.createProject(WorkflowJob.class, "w");
-            w.setDefinition(new CpsFlowDefinition(
-                    "echo 'Bstart'; requireResources(resources: ['foo/bar/baz', 'foo/red/sox']) { echo 'Binside' }; echo 'Bafter'", true
-            ));
 
-            r[0] = new PipelineGatingTest.Runner(w, j);
-            r[0].await("Bstart", "Binside");
-            r[0].await("Some resources are not available: foo/bar/baz is UNKNOWN, foo/red/sox is UNKNOWN");
-        });
+        WorkflowJob w = j.jenkins.createProject(WorkflowJob.class, "w");
+        w.setDefinition(new CpsFlowDefinition(
+                "echo 'Bstart'; requireResources(resources: ['foo/bar/baz', 'foo/red/sox']) { echo 'Binside' }; echo 'Bafter'", true
+        ));
 
-        j.then(j -> {
-            Utils.setStatus(Utils.snapshot(
-                    "foo/bar/baz", ResourceStatus.Category.UP,
-                    "foo/red/sox", ResourceStatus.Category.DOWN
-            ));
+        r[0] = new PipelineGatingTest.Runner(w, j);
+        r[0].await("Bstart", "Binside");
+        r[0].await("Some resources are not available: foo/bar/baz is UNKNOWN, foo/red/sox is UNKNOWN");
 
-            r[0].await("Bstart", "Binside");
-            r[0].await("Some resources are not available: foo/red/sox is DOWN");
-        });
+        j.restart();
 
-        j.then(j -> {
-            Utils.setStatus(Utils.snapshot(
-                    "foo/bar/baz", ResourceStatus.Category.UP,
-                    "foo/red/sox", ResourceStatus.Category.UP
-            ));
+        Utils.setStatus(Utils.snapshot(
+                "foo/bar/baz", ResourceStatus.Category.UP,
+                "foo/red/sox", ResourceStatus.Category.DOWN
+        ));
 
-            r[0].await("Binside");
-            r[0].await("Bafter");
-        });
+        r[0].await("Bstart", "Binside");
+        r[0].await("Some resources are not available: foo/red/sox is DOWN");
+
+        j.restart();
+
+        Utils.setStatus(Utils.snapshot(
+                "foo/bar/baz", ResourceStatus.Category.UP,
+                "foo/red/sox", ResourceStatus.Category.UP
+        ));
+
+        r[0].await("Binside");
+        r[0].await("Bafter");
     }
 }

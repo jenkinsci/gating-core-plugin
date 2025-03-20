@@ -30,10 +30,10 @@ import org.hamcrest.Matchers;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.jvnet.hudson.test.recipes.WithTimeout;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -43,16 +43,14 @@ import java.util.concurrent.ExecutionException;
 import static io.jenkins.plugins.gating.ResourceStatus.Category.UP;
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class PipelineGatingTest {
-
-    @Rule
-    public final JenkinsRule j  = new JenkinsRule();
+@WithJenkins
+class PipelineGatingTest {
 
     @Test
-    @WithTimeout(60)
-    public void jobDslProperty() throws Exception {
+    @Timeout(60)
+    void jobDslProperty(JenkinsRule j) throws Exception {
 
         FreeStyleProject seed = j.createFreeStyleProject();
         ExecuteDslScripts jobdsl = new ExecuteDslScripts();
@@ -80,7 +78,7 @@ public class PipelineGatingTest {
     }
 
     @Test
-    public void blockStepWhenDown() throws Exception {
+    void blockStepWhenDown(JenkinsRule j) throws Exception {
         MetricsProvider provider = new MetricsProvider() {
             @Nonnull @Override public Set<String> getLabels() {
                 return ImmutableSet.of("foo/bar/baz", "foo/red/sox");
@@ -118,7 +116,7 @@ public class PipelineGatingTest {
     }
 
     @Test
-    public void passStepWhenUp() throws Exception {
+    void passStepWhenUp(JenkinsRule j) throws Exception {
         Utils.setStatus(Utils.snapshot(
                 "foo/bar/baz", UP,
                 "foo/red/sox", UP
